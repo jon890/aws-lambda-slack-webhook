@@ -1,0 +1,30 @@
+{
+  "name": "aws-lambda-slack-webhook",
+  "version": "1.0.0",
+  "description": "AWS Lambda function that transforms data and sends it to Slack webhook",
+  "main": "dist/index.js",
+  "scripts": {
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "dev": "tsc -w",
+    "deploy": "pnpm build && zip -r function.zip dist",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [
+    "aws",
+    "lambda",
+    "slack",
+    "webhook"
+  ],
+  "author": "",
+  "license": "ISC",
+  "devDependencies": {
+    "@types/aws-lambda": "^8.10.148",
+    "@types/dotenv": "^8.2.3",
+    "@types/node": "^22.14.0",
+    "typescript": "^5.8.2"
+  },
+  "dependencies": {
+    "dotenv": "^16.4.7"
+  }
+}

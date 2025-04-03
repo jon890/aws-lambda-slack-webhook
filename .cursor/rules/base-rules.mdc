@@ -1,0 +1,86 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+# AWS Lambda Slack Webhook 프로젝트 기본 규칙
+
+## 프로젝트 개요
+이 프로젝트는 AWS Lambda를 사용하여 외부 요청을 받아 Slack 웹훅으로 전송하는 TypeScript 애플리케이션입니다.
+
+## 코드 스타일 가이드
+
+### 타입 정의
+- 기본적으로 `type`을 사용합니다.
+- 확장이 필요한 경우에만 `interface`를 사용합니다.
+- 타입 이름은 파스칼 케이스(PascalCase)로 작성합니다.
+
+```typescript
+// 좋은 예시
+export type UserData = {
+  id: string;
+  name: string;
+};
+
+// 확장이 필요한 경우 interface 사용
+interface BaseResponse {
+  status: number;
+}
+
+interface DetailedResponse extends BaseResponse {
+  data: unknown;
+}
+```
+
+### 환경 변수 관리
+- 환경 변수는 `.env` 파일에 정의하고 `dotenv`를 통해 로드합니다.
+- `.env` 파일은 git에 포함되지 않도록 `.gitignore`에 추가되어 있습니다.
+- 환경 변수 접근 시 직접 `process.env`를 사용하지 않고 `envUtils.ts` 파일의 유틸리티 함수를 사용합니다.
+
+```typescript
+// src/utils/envUtils.ts 사용 예시
+import { getSlackWebhookUrl } from './utils/envUtils';
+
+const webhookUrl = getSlackWebhookUrl();
+```
+
+### 프로젝트 구조
+- `src/types`: 타입 정의
+- `src/services`: 서비스 클래스 (예: SlackService)
+- `src/utils`: 유틸리티 함수 (예: 환경 변수, 데이터 변환)
+- `src/index.ts`: AWS Lambda 핸들러 함수
+
+### AWS Lambda 배포
+- 로컬 개발 환경에서는 `NODE_ENV=development`로 설정합니다.
+- AWS Lambda 콘솔에서는 다음 환경 변수를 설정해야 합니다:
+  - `SLACK_WEBHOOK_URL`: Slack 웹훅 URL (필수)
+  - `NODE_ENV`: production
+
+### 개발 워크플로우
+1. 의존성 설치: `pnpm install`
+2. 개발 모드 실행: `pnpm dev`
+3. 빌드: `pnpm build`
+4. 배포 패키지 생성: `pnpm deploy`
+
+### 데이터 흐름
+1. 외부 요청 수신 (JSON 형식)
+2. 데이터 파싱 및 검증
+3. Slack 메시지 형식으로 변환
+4. Slack 웹훅 호출
+5. 응답 반환
+
+### 오류 처리
+- 모든 API 엔드포인트에서 try-catch 블록 사용
+- 오류 발생 시 적절한 HTTP 상태 코드와 메시지 반환
+- 로깅을 통한 디버깅 정보 제공
+
+### 비동기 코드
+- Promise 기반 비동기 코드 작성
+- async/await 사용
+- 네트워크 요청 시 예외 처리 필수
+
+## 패키지 관리
+- 패키지 매니저로 `pnpm`을 사용합니다.
+- 의존성 추가: `pnpm add [패키지명]`
+- 개발 의존성 추가: `pnpm add -D [패키지명]`
+
