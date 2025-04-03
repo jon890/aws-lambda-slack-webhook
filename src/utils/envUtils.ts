@@ -1,11 +1,3 @@
-import * as dotenv from "dotenv";
-
-// 로컬 개발 환경에서만 .env 파일 로드
-// AWS Lambda 환경에서는 환경 변수가 Lambda 콘솔에서 설정됨
-if (process.env.NODE_ENV !== "production") {
-  dotenv.config();
-}
-
 /**
  * 환경 변수 가져오기
  * @param name 환경 변수 이름

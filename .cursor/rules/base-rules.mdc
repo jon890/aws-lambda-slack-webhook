@@ -33,9 +33,9 @@ interface DetailedResponse extends BaseResponse {
 ```
 
 ### 환경 변수 관리
-- 환경 변수는 `.env` 파일에 정의하고 `dotenv`를 통해 로드합니다.
-- `.env` 파일은 git에 포함되지 않도록 `.gitignore`에 추가되어 있습니다.
-- 환경 변수 접근 시 직접 `process.env`를 사용하지 않고 `envUtils.ts` 파일의 유틸리티 함수를 사용합니다.
+- 환경 변수는 `envUtils.ts` 파일의 유틸리티 함수를 통해 접근합니다.
+- 환경 변수 접근 시 직접 `process.env`를 사용하지 않습니다.
+- AWS Lambda 콘솔에서 환경 변수를 설정합니다.
 
 ```typescript
 // src/utils/envUtils.ts 사용 예시
@@ -51,7 +51,6 @@ const webhookUrl = getSlackWebhookUrl();
 - `src/index.ts`: AWS Lambda 핸들러 함수
 
 ### AWS Lambda 배포
-- 로컬 개발 환경에서는 `NODE_ENV=development`로 설정합니다.
 - AWS Lambda 콘솔에서는 다음 환경 변수를 설정해야 합니다:
   - `SLACK_WEBHOOK_URL`: Slack 웹훅 URL (필수)
   - `NODE_ENV`: production
@@ -60,7 +59,7 @@ const webhookUrl = getSlackWebhookUrl();
 1. 의존성 설치: `pnpm install`
 2. 개발 모드 실행: `pnpm dev`
 3. 빌드: `pnpm build`
-4. 배포 패키지 생성: `pnpm deploy`
+4. 배포 패키지 생성: `pnpm zip`
 
 ### 데이터 흐름
 1. 외부 요청 수신 (JSON 형식)
@@ -68,6 +67,18 @@ const webhookUrl = getSlackWebhookUrl();
 3. Slack 메시지 형식으로 변환
 4. Slack 웹훅 호출
 5. 응답 반환
+
+### 주문 이벤트 처리
+- `eventType`이 'CREATE_ORDER'인 경우 주문 이벤트로 처리합니다.
+- 주문 데이터는 `OrderEventData` 타입으로 파싱됩니다.
+- 슬랙 메시지는 다음 정보를 포함합니다:
+  - 플랫폼 타입 (웹/앱)
+  - 주문자명
+  - 주문번호
+  - 주문상품 목록
+  - 결제수단
+  - 실결제금액
+  - 비회원구매 여부
 
 ### 오류 처리
 - 모든 API 엔드포인트에서 try-catch 블록 사용

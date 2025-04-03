@@ -37,7 +37,6 @@ export class SlackService {
 
       return response;
     } catch (error) {
-      console.error("Slack 메시지 전송 실패:", error);
       throw error;
     }
   }

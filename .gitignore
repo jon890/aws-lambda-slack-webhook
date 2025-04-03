@@ -26,6 +26,7 @@ pnpm-debug.log*
 *.njsproj
 *.sln
 *.sw?
+*.http
 
 # 운영체제 파일
 .DS_Store

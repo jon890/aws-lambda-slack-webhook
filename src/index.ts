@@ -1,8 +1,8 @@
-import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { APIGatewayProxyResult } from "aws-lambda";
 import { SlackService } from "./services/slackService";
-import { transformToSlackMessage } from "./utils/transformUtils";
+import { LambdaResponse, OrderEventData } from "./types";
 import { getSlackWebhookUrl } from "./utils/envUtils";
-import { ExternalRequestData, LambdaResponse } from "./types";
+import { transformOrderEventToSlackMessage } from "./utils/transformUtils";
 
 /**
  * 에러 응답 생성
@@ -19,7 +19,7 @@ function createErrorResponse(
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify({ error: message }),
+    body: { error: message },
   };
 }
 
@@ -34,50 +34,38 @@ function createSuccessResponse(data: any): LambdaResponse {
     headers: {
       "Content-Type": "application/json",
     },
-    body: JSON.stringify(data),
+    body: data,
   };
 }
 
 /**
  * AWS Lambda 핸들러 함수
- * @param event API Gateway 이벤트
+ * @param event API Gateway 이벤트가 아닌 직접 전달된 이벤트 데이터
  * @returns Lambda 응답
  */
-export const handler = async (
-  event: APIGatewayProxyEvent
-): Promise<APIGatewayProxyResult> => {
+export const handler = async (event: any): Promise<APIGatewayProxyResult> => {
   try {
-    console.log("요청 수신:", JSON.stringify(event));
-
-    // 요청 본문 확인
-    if (!event.body) {
-      return createErrorResponse(400, "요청 본문이 필요합니다");
-    }
-
-    // 요청 데이터 파싱
-    let requestData: ExternalRequestData;
-    try {
-      requestData = JSON.parse(event.body);
-    } catch (error) {
-      return createErrorResponse(400, "유효하지 않은 JSON 형식입니다");
-    }
-
     // Slack 웹훅 URL 가져오기
     const webhookUrl = getSlackWebhookUrl();
     const slackService = new SlackService(webhookUrl);
 
     // 데이터 변환
-    const slackMessage = transformToSlackMessage(requestData);
+    let slackMessage;
 
-    // Slack 메시지 전송
-    const response = await slackService.sendMessage(slackMessage);
+    // 요청 타입에 따라 변환 로직 분기
+    if (event.eventType && event.eventType === "CREATE_ORDER") {
+      slackMessage = transformOrderEventToSlackMessage(event as OrderEventData);
 
-    return createSuccessResponse({
-      message: "Slack 메시지가 성공적으로 전송되었습니다",
-      status: response.status,
-    });
+      const response = await slackService.sendMessage(slackMessage);
+
+      return createSuccessResponse({
+        message: "Slack 메시지가 성공적으로 전송되었습니다",
+        status: response.status,
+      });
+    } else {
+      return createErrorResponse(500, "지원하지 않는 이벤트 타입입니다.");
+    }
   } catch (error) {
-    console.error("Error:", error);
     return createErrorResponse(
       500,
       error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다"

@@ -15,9 +15,6 @@ importers:
       '@types/aws-lambda':
         specifier: ^8.10.148
         version: 8.10.148
-      '@types/dotenv':
-        specifier: ^8.2.3
-        version: 8.2.3
       '@types/node':
         specifier: ^22.14.0
         version: 22.14.0
@@ -29,10 +26,6 @@ packages:
 
   '@types/aws-lambda@8.10.148':
     resolution: {integrity: sha512-JL+2cfkY9ODQeE06hOxSFNkafjNk4JRBgY837kpoq1GHDttq2U3BA9IzKOWxS4DLjKoymGB4i9uBrlCkjUl1yg==}
-
-  '@types/dotenv@8.2.3':
-    resolution: {integrity: sha512-g2FXjlDX/cYuc5CiQvyU/6kkbP1JtmGzh0obW50zD7OKeILVL0NSpPWLXVfqoAGQjom2/SLLx9zHq0KXvD6mbw==}
-    deprecated: This is a stub types definition. dotenv provides its own type definitions, so you do not need this installed.
 
   '@types/node@22.14.0':
     resolution: {integrity: sha512-Kmpl+z84ILoG+3T/zQFyAJsU6EPTmOCj8/2+83fSN6djd6I4o7uOuGIH6vq3PrjY5BGitSbFuMN18j3iknubbA==}
@@ -52,10 +45,6 @@ packages:
 snapshots:
 
   '@types/aws-lambda@8.10.148': {}
-
-  '@types/dotenv@8.2.3':
-    dependencies:
-      dotenv: 16.4.7
 
   '@types/node@22.14.0':
     dependencies:
