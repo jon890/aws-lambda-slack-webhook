@@ -18,9 +18,8 @@ function getPaymentMethodText(payType: string): string {
   switch (payType.toUpperCase()) {
     case "CREDIT_CARD":
       return "카드";
-    case "BANK":
-    case "VIRTUAL_ACCOUNT":
-      return "무통장입금";
+    case "ACCOUNT":
+      return "무통장 입금";
     case "NAVER_PAY":
       return "네이버페이";
     case "KAKAO_PAY":
@@ -63,35 +62,74 @@ export function transformOrderEventToSlackMessage(
 ): SlackMessage {
   // 필요한 데이터 추출
   const { order, pay } = data;
-  const { ordererName, orderNo, memberYn, platformType } = order;
+  const { ordererName, orderNo, memberYn, platformType, ordererEmail } = order;
   const { payType } = pay;
   const lastPayAmt = order.lastPayAmt;
 
   // 플랫폼 타입 (웹/앱)
   const platformTypeText = getPlatformTypeText(platformType);
 
-  // 주문 상품 목록 생성
-  const orderProducts = order.orderProducts.flatMap((product) =>
-    product.orderProductOptions.map((option) => ({
+  // 주문 상품 및 옵션 정보 생성
+  const productDetails = order.orderProducts.map((product) => {
+    const options = product.orderProductOptions.map((option) => {
+      // 옵션 정보 텍스트 구성
+      let optionInfo = "";
+      if (
+        option.optionUseYn === "Y" &&
+        option.optionName &&
+        option.optionValue
+      ) {
+        optionInfo = `${option.optionName}: ${option.optionValue}`;
+      }
+
+      // 사용자 입력형 옵션 정보 추가
+      const userInputTexts: string[] = [];
+      if (option.userInputs && option.userInputs.length > 0) {
+        option.userInputs.forEach((input) => {
+          userInputTexts.push(`${input.inputLabel}: ${input.inputValue}`);
+        });
+      }
+
+      return {
+        name: product.productName,
+        count: option.orderCnt,
+        optionInfo,
+        userInputs: userInputTexts.length > 0 ? userInputTexts.join(", ") : "",
+        price: option.adjustedAmt,
+      };
+    });
+
+    return {
       name: product.productName,
-      count: option.orderCnt,
-    }))
-  );
-
-  // 상품명과 개수를 텍스트로 변환
-  const productCountMap = new Map<string, number>();
-
-  orderProducts.forEach((product) => {
-    const currentCount = productCountMap.get(product.name) || 0;
-    productCountMap.set(product.name, currentCount + product.count);
+      options,
+    };
   });
 
+  // 상품과 옵션 정보를 텍스트로 변환
   const productTexts: string[] = [];
-  productCountMap.forEach((count, name) => {
-    productTexts.push(`${name} ${count}개`);
+
+  productDetails.forEach((product) => {
+    product.options.forEach((option) => {
+      let productText = `${product.name} ${option.count}개`;
+
+      // 옵션 정보가 있는 경우 추가
+      if (option.optionInfo) {
+        productText += ` (${option.optionInfo})`;
+      }
+
+      // 사용자 입력형 옵션 정보가 있는 경우 추가
+      if (option.userInputs) {
+        productText += ` [${option.userInputs}]`;
+      }
+
+      // 가격 정보 추가
+      productText += ` - ${formatAmount(option.price)}원`;
+
+      productTexts.push(productText);
+    });
   });
 
-  const productText = productTexts.join(", ");
+  const productText = productTexts.join("\n");
 
   // 결제 수단 텍스트
   const paymentMethodText = getPaymentMethodText(payType);
@@ -102,7 +140,9 @@ export function transformOrderEventToSlackMessage(
 *주문상품:* ${productText}
 *결제수단:* ${paymentMethodText}
 *실결제금액:* ${formatAmount(lastPayAmt)} 원
-*비회원 구매:* ${memberYn === "Y" ? "아니오" : "예"}`;
+*회원상태:*
+  - 회원: ${memberYn === "Y" ? "예" : "아니오"}
+  - 이메일: ${ordererEmail}`;
 
   const slackMessage: SlackMessage = {
     text: messageText,

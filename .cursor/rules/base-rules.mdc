@@ -95,3 +95,184 @@ const webhookUrl = getSlackWebhookUrl();
 - 의존성 추가: `pnpm add [패키지명]`
 - 개발 의존성 추가: `pnpm add -D [패키지명]`
 
+
+## 주문 생성 (CREATE_ORDER) 샘플 스키마
+
+```json
+// 샘플 데이터 및 파라미터 정의
+{
+    "eventType": "CREATE_ORDER", //이벤트명
+    "order": {
+        "orderNo": "2021100201234567890", // 주문번호
+        "mallNo": 30973, // 몰번호
+        "serviceNo": 30388, // 서비스 번호
+        "memberNo": 8411244, // 회원번호
+        "memberYn": "Y", // 회원여부
+        "ordererName": "홍길동", // 주문자명
+        "ordererContact1": "010-1234-1234", // 주문자 핸드폰 번호
+        "ordererContact2": "010-1234-1234", // 주문자 전화 번호
+        "ordererEmail": "honggildong@naver.com", // 주문자 이메일
+        "payType": "CREDIT_CARD", // PG타입(페이코/KCP 등)
+        "pgType": "KCP", // 결제타입(페이코/신용카드 등)
+        "platformType": "MOBILE_WEB", // 플렛폼 타입 (PC/MOBILE_WEB 등)
+        "lastPayAmt": 185000.00, // 최종결제금액
+        "lastSubPayAmt": 0.00, // 최종 적립금 결제금액
+        "lastStandardAmt": 329000.00, // 최종상품금액(할인제외)
+        "lastDeliveryAmt": 0.00, // 최종배송금액
+        "lastRemoteDeliveryAmt": 0.00, // 최종지역별추가배송금액
+        "lastImmediateDiscountAmt": 144000.00, // 최종즉시할인금액
+        "lastAdditionalDiscountAmt": 0.00, // 최종추가할인금액
+        "lastCartCouponDiscountAmt": 0.00, // 최종주문쿠폰할인금액
+        "lastProductCouponDiscountAmt": 0.00, // 최종상품쿠폰할인금액
+        "lastTaxFreeAmt": 0.00, // 최종비과세금액
+        "lastTaxableAmt": 168181.00, // 최종과세금액
+        "lastVatAmt": 16819.00, // 최종부과세액
+        "firstSalesTaxAmt": 0.00, // 최초부과세액
+        "lastSalesTaxAmt": 0.00, // 최종부과세액
+        "firstCustomsDutyAmt": 0.00, // 최초관부가세
+        "lastCustomsDutyAmt": 0.00, // 최종관부가세
+        "registerYmdt": "2021-10-25 13:53:18", // 등록일
+        "trackingKey": "trackingKey", // 쇼핑채널링-추적키
+        "cartCouponIssueNo": 12, // 장바구니쿠폰 발급 번호
+        "channelType": null // 유입 경로
+        "orderProducts": [
+            {
+                "orderProductNo": 50000000, // 주문상품번호
+                "mallProductNo": 100000000, // 상품번호
+                "productName": "상품명",
+                "productManagementCd": "", // 상품관리 코드
+                "hsCode": "",
+                "eanCode": null,
+                "partnerNo": 50000, // 파트너 번호
+                "lastProductCouponDiscountAmt": 0.00, // 상품 쿠폰 할인액
+                "productCouponIssueNo": 13, // 사용한 상품 쿠폰 번호
+                "orderProductOptions": [
+                    {
+                        "orderProductOptionNo": 5062925, // 주문상품옵션번호
+                        "orderNo": "2021100201234567890", // 주문번호
+                        "memberNo": 100000, // 회원번호
+                        "userInputs": [ // 구매자 입력형 옵션
+                            {
+                              "inputLabel": "색깔", // 구매자 작성형 옵션 이름
+                              "inputValue":"검정색", //구매자 입력형 옵션 값
+                            }
+                        ],
+                        "serviceNo": 30000, // 서비스 번호
+                        "mallNo": 1000, // 몰번호
+                        "mallProductNo": 10000000, // 상품번호
+                        "productName": "상품명",
+                        "mallOptionNo": 6000000, // 상품옵션번호
+                        "mallAdditionalProductNo": 0, // 추가 상품 번호
+                        "optionUseYn": "Y", // 옵션 사용 여부
+                        "optionName": "옵션명",
+                        "optionValue": "옵션값",
+                        "imageUrl": "//rlyfaazj0.toastcdn.net/...", // 상품 이미지 url
+                        "orderCnt": 1, // 주문건수
+                        "originalOrderCnt": 1, // 최초 주문 수량
+                        "salePrice": 329000.00, // 판매 가격
+                        "immediateDiscountAmt": 144000.00, // 즉시 할인 가격
+                        "addPrice": 0.00, // 추가 금액
+                        "additionalDiscountAmt": 0.00, // 추가 할인 금액
+                        "partnerChargeAmt": 0.00, // 파트너 부담액
+                        "adjustedAmt": 185000.00, // 조정된 상품 금액
+                        "orderStatusType": "PAY_DONE", // 주문옵션상태
+                        "claimStatusType": null, // 클레임 상태
+                        "orderYmdt": "2021-10-25 13:53:18", // 주문일시
+                        "payYmdt": "2021-10-25 13:54:38", // 결제일시
+                        "orderAcceptYmdt": null, // 주문접수일시
+                        "releaseReadyYmdt": null, // 배송준비일시
+                        "releaseYmdt": null, // 배송일시
+                        "deliveryCompleteYmdt": null, // 배송완료일시
+                        "buyConfirmYmdt": null, // 구매확정일시
+                        "registerYmdt": "2021-10-25 13:53:18", // 주문옵션 생성일시
+                        "trackingKey": "platform=MO&rid=851184319&aid=641_1_3_1025&mid=TMS", // 주문추적키 (쇼핑몰에서 생성되어 주문번호를 특정하는 구분값)
+                        "deliveryNo": 400000, // 배송번호
+                        "deliveryInternationalYn": false, // 해외배송여부
+                        "optionManagementCd": "", // 옵션 관리 코드
+                        "deliveryTemplateNo": 50000, // 배송 템플릿 번호
+                        "deliveryCompanyType": "CJ", // 배송 업체
+                        "invoiceNo": null, // 송장번호
+                        "receiverName": "홍길동", // 받는 사람 이름
+                        "receiverContact1": "010-1234-5678", //수령자 휴대폰번호
+                        "receiverContact2": "", //수령자 전화번호
+                        "zipCd": 12345, //배송지 우편번호
+                        "receiverAddress": "", // 주소
+                        "receiverDetailAddress": "", // 상세 주소
+                        "receiverJibunAddress": "", //지번 주소
+                        "usesShippingInfoLaterInput": false, // 나중배송지 입력 여부
+                        "shippingInfoLaterInputContact": null, // 나중배송지 입력 전화 번호
+                        "encryptedShippingNo": null, // 나중배송지 입력 시 사용하는 암호화된 배송번호
+                        "shippingEmptyAutoCancelYmdt" : "2023-10-25 13:54:38", // 배송지 미입력 시 자동 주문취소 일시
+                        "customsIdNumber": '', // 개인통관고유부호
+                    }
+                ]
+            }
+        ]
+    },
+    "pay": {
+        "pgType": "KCP", // PG 타입
+        "payType": "CREDIT_CARD", // 결제 유형
+        "payYmdt": "2021-10-25 13:54:38", // 결제일시
+        "payStatusType": "DONE", // 결제상태
+        "payInfo": {
+            "payType": "CREDIT_CARD", // 결제 유형
+            "cardInfo": {
+                "cardCompany": "SHINHAN", // 카드사
+                "cardCode": "CCLG", // PG 카드사 코드(PG별로 다름)
+                "cardName": "신한카드", // 카드사명
+                "approveYmdt": "2021-10-25 13:54:38", // 결제승인시간
+                "cardNo": "*****", // 카드번호
+                "cardApprovalNumber": "****", // 결제승인번호
+                "noInterest": true, // 무이자여부
+                "installmentPeriod": 5, // 할부기간
+                "cardAmt": 185000 // 신용카드 결제금액
+            },
+            "bankInfo": {
+                "bank" : "KDB", // 은행
+                "bankCode": "", // PG 은행코드 (PG별로 다름)
+                "bankName": "", // 은행명
+                "account": "", // 계좌번호
+                "bankAmt": 1000, // 입금해야할 금액
+                "depositAmt": 1000, // 실제 입금금액
+                "depositYmdt": "2021-10-25 13:54:38", // 입금일시
+                "remitterName": "", // 입금자명
+                "depositorName": "", // 예금주명
+                "paymentExpirationYmdt": "2021-10-25 13:54:38" // 입금 마감일
+            },
+            "cashAuthNo": "", // 현금영수증 승인번호
+            "cashNo": "", // 현금영수증 거래번호
+            "tradeNo": "3000000", // 거래번호
+            "escrowYn": "N", // 에스크로 결제 여부
+            "payAmt": 185000, // PG결제 금액
+            "sellerCouponAmt": 0, // 가맹점 발행쿠폰
+            "pgCouponAmt": 0, // PG 쿠폰 금액
+            "cardCouponAmt": 0, // 카드사 쿠폰 금액
+            "pointAmt": 0, // PG 포인트
+            "paymentKey": {
+                "pgType": "KCP", // PG 유형
+                "key": "key", // PG Key
+                "etcInfos": {} // 기타 결제 키 관련 정보
+            },
+            "taxType": "DUTY", // 과세유형 (과세,면세,영세)
+            "mobileInfo": { // 핸드폰 결제 정보
+                "mobileNo": "010-1234-5678", // 결제 핸드폰 번호
+                "mobileCompany": "" // 통신사
+            },
+            "naverPayInfo": { // 네이버 페이 결제 정보
+                "paymentMeans": "", // 네이버 페이 결제 수단
+                "paymentDueDate": "", // 입금 기한
+                "paymentNumber":"", // PG승인번호
+                "orderDiscountAmount": 1000, // 주문 할인액
+                "generalPaymentAmount": 1000, // 일반결제수단최종결제금액
+                "naverMileagePaymentAmount": 1000, // 네이버페이 포인트 최종 결제 금액
+                "chargeAmountPaymentAmount": 1000, // 충전금최종결제금액
+                "checkoutAccumulationPaymentAmount": 1000, // 네이버페이 적립금 최종 결제 금액
+                "orderType": "", // 주문 유형 구분(네이버페이/통합장바구니)
+                "payLocationType": "", // 결제 위치 구분(PC/MOBILE)
+                "paymentCoreType": "", // 결제 구분(네이버결제/PG 결제)
+                "payLaterPaymentAmount": 1000 // 후불결제 금액(네이버결제/PG 결제)
+            }
+        }
+    }
+}
+```
