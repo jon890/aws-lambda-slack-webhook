@@ -183,6 +183,7 @@ export function transformOrderStatusChangeToSlackMessage(
   const orderStatusMap: Record<string, string> = {
     PAY_DONE: "결제완료",
     DELIVERY_ING: "배송중",
+    CANCEL_DONE: "취소완료",
   };
 
   const orderStatusText = orderStatusMap[orderStatusType] || orderStatusType;

@@ -54,8 +54,11 @@ export const handler = async (
         const orderStatusChangeData = requestBody as OrderStatusChangeData[];
 
         for (const data of orderStatusChangeData) {
-          slackMessage = transformOrderStatusChangeToSlackMessage(data);
-          await slackService.sendMessage(slackMessage);
+          // 취소 완료 상태만 알림으로 보내도록 수정
+          if (data.orderStatusType === "CANCEL_DONE") {
+            slackMessage = transformOrderStatusChangeToSlackMessage(data);
+            await slackService.sendMessage(slackMessage);
+          }
         }
 
         responseMessage = "주문 상태 변경 이벤트가 성공적으로 처리되었습니다";
