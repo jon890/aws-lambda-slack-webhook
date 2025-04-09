@@ -1,4 +1,4 @@
-import { OrderEventData, SlackMessage } from "../types";
+import { OrderEventData, OrderStatusChangeData, SlackMessage } from "../types";
 
 /**
  * 주문 금액을 포맷팅하는 함수
@@ -143,6 +143,89 @@ export function transformOrderEventToSlackMessage(
 *회원상태:*
   - 회원: ${memberYn === "Y" ? "예" : "아니오"}
   - 이메일: ${ordererEmail}`;
+
+  const slackMessage: SlackMessage = {
+    text: messageText,
+    blocks: [
+      {
+        type: "section",
+        text: {
+          type: "mrkdwn",
+          text: messageText,
+        },
+      },
+    ],
+  };
+
+  return slackMessage;
+}
+
+/**
+ * 주문 상태 변경 데이터를 슬랙 메시지로 변환하는 함수
+ * @param data 주문 상태 변경 데이터
+ * @returns 슬랙 메시지 형식
+ */
+export function transformOrderStatusChangeToSlackMessage(
+  data: OrderStatusChangeData
+): SlackMessage {
+  // 필요한 데이터 추출
+  const {
+    orderNo,
+    productName,
+    orderStatusType,
+    receiverName,
+    invoiceNo,
+    deliveryCompanyType,
+    adjustedAmt,
+  } = data;
+
+  // 주문 상태 텍스트 (한글로 변환)
+  const orderStatusMap: Record<string, string> = {
+    PAY_DONE: "결제완료",
+    DELIVERY_ING: "배송중",
+  };
+
+  const orderStatusText = orderStatusMap[orderStatusType] || orderStatusType;
+
+  // 배송 회사 텍스트 (한글로 변환)
+  const deliveryCompanyMap: Record<string, string> = {
+    CJ: "CJ대한통운",
+    LOTTE: "롯데택배",
+    HANJIN: "한진택배",
+    POST: "우체국택배",
+    LOGEN: "로젠택배",
+    KGB: "KGB택배",
+    KYOUNG_DONG: "경동택배",
+    DAESIN: "대신택배",
+    ILYANG: "일양로지스",
+    CHUNIL: "천일택배",
+    CVSNET: "편의점택배",
+    DONG_BU: "동부택배",
+    AIRLIFT: "에어리프트",
+    QUICK_START: "퀵스타트",
+    DAILY_EXPRESS: "일반택배",
+    HOMEPICK: "홈픽택배",
+    HDEXP: "합동택배",
+    SUPREME_EXPRESS: "서프림익스프레스",
+    FRESH_SOLUTION: "프레시솔루션",
+  };
+
+  const deliveryCompanyText =
+    deliveryCompanyMap[deliveryCompanyType] || deliveryCompanyType;
+
+  // 송장번호 텍스트
+  const invoiceText = invoiceNo
+    ? `${deliveryCompanyText} ${invoiceNo}`
+    : "송장번호 미등록";
+
+  // 슬랙 메시지 생성 (텍스트 강조 및 이모티콘 적용)
+  const messageText = `:bell: *주문 상태 변경 알림* :bell:
+*주문번호:* ${orderNo}
+*상품명:* ${productName}
+*주문금액:* ${formatAmount(adjustedAmt)} 원
+*수령인:* ${receiverName}
+*주문상태:* ${orderStatusText}
+*송장정보:* ${invoiceText}`;
 
   const slackMessage: SlackMessage = {
     text: messageText,

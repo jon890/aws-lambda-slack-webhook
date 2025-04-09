@@ -6,7 +6,8 @@ alwaysApply: true
 # AWS Lambda Slack Webhook 프로젝트 기본 규칙
 
 ## 프로젝트 개요
-이 프로젝트는 AWS Lambda를 사용하여 외부 요청을 받아 Slack 웹훅으로 전송하는 TypeScript 애플리케이션입니다.
+- 이 프로젝트는 AWS Lambda를 사용하여 외부 요청을 받아 Slack 웹훅으로 전송하는 TypeScript 애플리케이션입니다.
+- API Gateway -> Lambda 프록시 통합으로 사용해야 합니다.
 
 ## 코드 스타일 가이드
 
@@ -275,4 +276,83 @@ const webhookUrl = getSlackWebhookUrl();
         }
     }
 }
+```
+
+## 주문상태 변경 (CHANGE_ORDER_STATUS) 스키마
+
+```json
+[
+    {
+          "eventType": "CHANGE_ORDER_STATUS", //이벤트명
+          "orderProductOptionNo": 12345, // 주문상품 옵션번호
+          "orderNo": "202110110111111", // 주문번호
+          "memberNo": 12345, // 회원번호
+          "userInputs": [ // 구매자 입력형 옵션
+              {
+                "inputLabel":"색깔", //구매자 작성형 옵션 이름
+                "inputValue":"검정색", //구매자 입력형 옵션 값
+              }
+          ],
+          "serviceNo": 12345, // 서비스번호
+          "mallNo": 12345, // 몰번호
+          "deliveryNo": 12345, // 배송번호
+          "deliveryTemplateNo": 50000, // 배송 템플릿 번호
+          "deliveryInternationalYn":false, // 해외배송여부
+          "mallProductNo": 100000000, // 상품번호
+          "productName": "상품명",
+          "mallOptionNo": 6000000, // 상품옵션번호
+          "mallAdditionalProductNo": 0, // 추가 상품 번호
+          "optionUseYn": "Y", // 옵션 사용 여부
+          "optionName": "옵션명",
+          "optionValue": "옵션값",
+          "imageUrl": "//rlyfaazj0.toastcdn.net/...", // 상품 이미지 url
+          "orderCnt": 1, // 주문건수
+          "originalOrderCnt": 1, // 최초 주문 수량
+          "salePrice": 329000.00, // 판매 가격
+          "immediateDiscountAmt": 144000.00, // 즉시 할인 가격
+          "addPrice": 0.00, // 추가 금액
+          "additionalDiscountAmt": 0.00, // 추가 할인 금액
+          "partnerChargeAmt": 0.00, // 파트너 부담액
+          "adjustedAmt": 185000.00, // 조정된 상품 금액
+          "orderStatusType": "PAY_DONE", // 주문옵션상태
+          "claimStatusType": null, // 클레임 상태
+          "orderYmdt": "2021-10-25 13:53:18", // 주문일시
+          "payYmdt": "2021-10-25 13:54:38", // 결제일시
+          "orderAcceptYmdt": null, // 주문접수일시
+          "releaseReadyYmdt": null, // 배송준비일시
+          "releaseYmdt": null, // 배송일시
+          "deliveryCompleteYmdt": null, // 배송완료일시
+          "buyConfirmYmdt": null, // 구매확정일시
+          "registerYmdt": "2021-10-25 13:53:18", // 주문옵션 생성일시
+          "trackingKey": "platform=MO&rid=851184319&aid=641_1_3_1025&mid=TMS", // 주문추적키 (쇼핑몰에서 생성되어 주문번호를 특정하는 구분값)
+          "deliveryCompanyType": "CJ", // 배송 업체
+          "invoiceNo": : "1212", // 송장번호
+          "receiverName": "홍길동", // 받는 사람 이름
+          "zipCd": 12345, // 배송지 우편 번호
+          "address": "경기도 성남시 분당구 대왕판교로645번길 12", // 배송지 주소
+          "detailAddress": "16 NHN 플레이뮤지엄", // 배송지 상세 주소
+          "jibunAddress": "경기도 성남시 분당구 대왕판교로645번길", // 배송지 지번 주소
+          "receiverCity": "", // 배송지 해외(도시)
+          "receiverState": "", // 배송지 해외(주)
+          "contact1": "010-0000-0000", // 수령자 연락처1
+          "contact2": "", // 수령자 연락처2
+          "productManagementCd": "", // 상품관리 코드
+          "optionManagementCd": "", // 옵션관리 코드
+          "usesShippingInfoLaterInput": false, // 나중배송지 입력 여부
+          "shippingInfoLaterInputContact": null, // 나중배송지 입력 전화 번호
+          "encryptedShippingNo": null, // 나중배송지 입력 시 사용하는 암호화된 배송번호
+          "retrieveInvoiceUrl": null // 배송조회 할 수 있는 url
+          "isFreeGift": false, // 사은품 여부
+          "updateAdminNo": 0, // 해당 주문의 상태를 마지막으로 바꾼 어드민의 번호
+          "extraManagementCd": "", // 옵션의 추가관리코드 (상품 등록/수정에서 설정 가능)
+          "order": {
+          "extraData": "{"language": "KO"}",
+          "currencyCode": "KRW",
+          "exchangeRate": null
+        },
+          "claimNo": 123,
+          "requestChannelType": "USER" // 상태변경이 요청된 채널 [SYSTEM, SERVICE, PARTNER, BATCH, USER, SERVER]
+          "channelType": null // 유입 경로
+  }
+]
 ```
