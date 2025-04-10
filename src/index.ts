@@ -64,10 +64,9 @@ export const handler = async (
 
         // 주문 상태에 따라 적절한 채널로 메시지 전송
         if (datum.orderStatusType === "CANCEL_DONE") {
-          // 취소 상태는 주문 생성 채널로만 전송
           success = await orderCreationService.sendMessage(slackMessage);
+          success = await statusChangeService.sendMessage(slackMessage);
         } else {
-          // 그 외 상태 변경은 상태 변경 채널로만 전송
           success = await statusChangeService.sendMessage(slackMessage);
         }
       }
