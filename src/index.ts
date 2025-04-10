@@ -28,15 +28,16 @@ export const handler = async (
       return createErrorResponse(400, "요청 본문이 필요합니다.");
     }
 
-    // 요청 바디 파싱
-    const parsedBody = JSON.parse(event.body);
-
-    // 이벤트 타입 확인
-    const eventType = parsedBody.eventType;
+    // 쿼리 파라미터에서 이벤트 타입 확인
+    const queryParams = event.queryStringParameters || {};
+    const eventType = queryParams.eventType;
 
     if (!eventType) {
-      return createErrorResponse(400, "eventType 필드가 필요합니다.");
+      return createErrorResponse(400, "eventType 쿼리 파라미터가 필요합니다.");
     }
+
+    // 요청 바디 파싱
+    const parsedBody = JSON.parse(event.body);
 
     // 슬랙 서비스 인스턴스 미리 생성
     const orderCreationWebhook = getOrderCreationWebhookUrl();
@@ -55,20 +56,20 @@ export const handler = async (
 
       // 주문 생성 채널로 메시지 전송
       success = await orderCreationService.sendMessage(slackMessage);
-    } else if (eventType === "CHANGE_ORDER_STATUS") {
+    } else if (eventType === "ORDER_STATUS_CHANGE") {
       // 주문 상태 변경 이벤트 처리
-      const orderStatusChangeData = parsedBody as OrderStatusChangeData;
-      const slackMessage = transformOrderStatusChangeToSlackMessage(
-        orderStatusChangeData
-      );
+      const orderStatusChangeData = parsedBody as OrderStatusChangeData[];
+      for (const datum of orderStatusChangeData) {
+        const slackMessage = transformOrderStatusChangeToSlackMessage(datum);
 
-      // 주문 상태에 따라 적절한 채널로 메시지 전송
-      if (orderStatusChangeData.orderStatusType === "CANCEL_DONE") {
-        // 취소 상태는 주문 생성 채널로만 전송
-        success = await orderCreationService.sendMessage(slackMessage);
-      } else {
-        // 그 외 상태 변경은 상태 변경 채널로만 전송
-        success = await statusChangeService.sendMessage(slackMessage);
+        // 주문 상태에 따라 적절한 채널로 메시지 전송
+        if (datum.orderStatusType === "CANCEL_DONE") {
+          // 취소 상태는 주문 생성 채널로만 전송
+          success = await orderCreationService.sendMessage(slackMessage);
+        } else {
+          // 그 외 상태 변경은 상태 변경 채널로만 전송
+          success = await statusChangeService.sendMessage(slackMessage);
+        }
       }
     } else {
       // 지원하지 않는 이벤트 타입
