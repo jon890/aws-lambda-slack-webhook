@@ -15,11 +15,19 @@ export function getEnv(name: string, required: boolean = false): string {
 }
 
 /**
- * 슬랙 웹훅 URL 가져오기
- * @returns Slack Webhook URL
+ * 주문 생성 채널의 슬랙 웹훅 URL을 반환하는 함수
+ * @returns 주문 생성 채널의 슬랙 웹훅 URL
  */
-export function getSlackWebhookUrl(): string {
-  return getEnv("SLACK_WEBHOOK_URL", true);
+export function getOrderCreationWebhookUrl(): string {
+  return getEnv("SLACK_ORDER_CREATE_WEBHOOK_URL", true);
+}
+
+/**
+ * 주문 상태 변경 채널의 슬랙 웹훅 URL을 반환하는 함수
+ * @returns 주문 상태 변경 채널의 슬랙 웹훅 URL
+ */
+export function getOrderStatusChangeWebhookUrl(): string {
+  return getEnv("SLACK_ORDER_STATUS_CHANGE_WEBHOOK_URL", true);
 }
 
 /**
@@ -27,5 +35,5 @@ export function getSlackWebhookUrl(): string {
  * @returns 현재 실행 환경 (development, production 등)
  */
 export function getNodeEnv(): string {
-  return getEnv("NODE_ENV", false) || "development";
+  return process.env.NODE_ENV || "development";
 }

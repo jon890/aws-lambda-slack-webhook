@@ -1,82 +1,97 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { SlackService } from "./services/slackService";
-import { OrderEventData, OrderStatusChangeData, SlackMessage } from "./types";
-import { getSlackWebhookUrl } from "./utils/envUtils";
-import {
-  createErrorResponse,
-  createSuccessResponse,
-} from "./utils/responseUtils";
+import { OrderEventData, OrderStatusChangeData } from "./types";
 import {
   transformOrderEventToSlackMessage,
   transformOrderStatusChangeToSlackMessage,
 } from "./utils/transformUtils";
+import { SlackService } from "./services/slackService";
+import {
+  getOrderCreationWebhookUrl,
+  getOrderStatusChangeWebhookUrl,
+} from "./utils/envUtils";
+import {
+  createErrorResponse,
+  createSuccessResponse,
+} from "./utils/responseUtils";
 
 /**
- * AWS Lambda 핸들러 함수
+ * Lambda 핸들러 함수
  * @param event API Gateway 이벤트
- * @returns Lambda 응답
+ * @returns API Gateway 응답
  */
 export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // Slack 웹훅 URL 가져오기
-    const webhookUrl = getSlackWebhookUrl();
-    const slackService = new SlackService(webhookUrl);
-
-    // 데이터 변환
-    let slackMessage: SlackMessage;
-    let responseMessage = "";
-
-    // 쿼리 파라미터에서 이벤트 타입 확인
-    const queryParams = event.queryStringParameters || {};
-    const eventType = queryParams.eventType || "";
-
-    let requestBody = JSON.parse(event.body ?? "{}");
-
-    switch (eventType.toUpperCase()) {
-      case "ORDER_CREATE":
-        if (requestBody.eventType === "CREATE_ORDER") {
-          slackMessage = transformOrderEventToSlackMessage(
-            requestBody as OrderEventData
-          );
-          await slackService.sendMessage(slackMessage);
-          responseMessage = "주문 생성 이벤트가 성공적으로 처리되었습니다";
-        } else {
-          return createErrorResponse(
-            400,
-            "올바른 주문 생성 이벤트 형식이 아닙니다"
-          );
-        }
-        break;
-
-      case "ORDER_STATUS_CHANGE":
-        const orderStatusChangeData = requestBody as OrderStatusChangeData[];
-
-        for (const data of orderStatusChangeData) {
-          // 취소 완료 상태만 알림으로 보내도록 수정
-          if (data.orderStatusType === "CANCEL_DONE") {
-            slackMessage = transformOrderStatusChangeToSlackMessage(data);
-            await slackService.sendMessage(slackMessage);
-          }
-        }
-
-        responseMessage = "주문 상태 변경 이벤트가 성공적으로 처리되었습니다";
-        break;
-
-      default:
-        return createErrorResponse(400, "지원하지 않는 이벤트 타입입니다");
+    // 요청 바디가 없는 경우 처리
+    if (!event.body) {
+      return createErrorResponse(400, "요청 본문이 필요합니다.");
     }
 
-    return createSuccessResponse({
-      message: responseMessage,
-      status: 200,
-    });
+    // 요청 바디 파싱
+    const parsedBody = JSON.parse(event.body);
+
+    // 이벤트 타입 확인
+    const eventType = parsedBody.eventType;
+
+    if (!eventType) {
+      return createErrorResponse(400, "eventType 필드가 필요합니다.");
+    }
+
+    // 슬랙 서비스 인스턴스 미리 생성
+    const orderCreationWebhook = getOrderCreationWebhookUrl();
+    const statusChangeWebhook = getOrderStatusChangeWebhookUrl();
+
+    const orderCreationService = new SlackService(orderCreationWebhook);
+    const statusChangeService = new SlackService(statusChangeWebhook);
+
+    let success = false;
+
+    // 이벤트 타입에 따라 처리
+    if (eventType === "CREATE_ORDER") {
+      // 주문 생성 이벤트 처리
+      const orderEventData = parsedBody as OrderEventData;
+      const slackMessage = transformOrderEventToSlackMessage(orderEventData);
+
+      // 주문 생성 채널로 메시지 전송
+      success = await orderCreationService.sendMessage(slackMessage);
+    } else if (eventType === "CHANGE_ORDER_STATUS") {
+      // 주문 상태 변경 이벤트 처리
+      const orderStatusChangeData = parsedBody as OrderStatusChangeData;
+      const slackMessage = transformOrderStatusChangeToSlackMessage(
+        orderStatusChangeData
+      );
+
+      // 주문 상태에 따라 적절한 채널로 메시지 전송
+      if (orderStatusChangeData.orderStatusType === "CANCEL_DONE") {
+        // 취소 상태는 주문 생성 채널로만 전송
+        success = await orderCreationService.sendMessage(slackMessage);
+      } else {
+        // 그 외 상태 변경은 상태 변경 채널로만 전송
+        success = await statusChangeService.sendMessage(slackMessage);
+      }
+    } else {
+      // 지원하지 않는 이벤트 타입
+      return createErrorResponse(
+        400,
+        `지원하지 않는 이벤트 타입: ${eventType}`
+      );
+    }
+
+    if (success) {
+      return createSuccessResponse({
+        message: "메시지가 성공적으로 전송되었습니다.",
+        status: 200,
+      });
+    } else {
+      return createErrorResponse(500, "메시지 전송 중 오류가 발생했습니다.");
+    }
   } catch (error) {
-    console.log("Error processing event:", error);
     return createErrorResponse(
       500,
-      error instanceof Error ? error.message : "알 수 없는 오류가 발생했습니다"
+      error instanceof Error
+        ? error.message
+        : "요청 처리 중 오류가 발생했습니다."
     );
   }
 };

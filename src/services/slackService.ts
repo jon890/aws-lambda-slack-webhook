@@ -16,9 +16,9 @@ export class SlackService {
   /**
    * Slack 웹훅으로 메시지 전송
    * @param message 전송할 슬랙 메시지
-   * @returns 응답 결과
+   * @returns 성공 여부
    */
-  async sendMessage(message: SlackMessage): Promise<Response> {
+  async sendMessage(message: SlackMessage): Promise<boolean> {
     try {
       const response = await fetch(this.webhookUrl, {
         method: "POST",
@@ -35,9 +35,10 @@ export class SlackService {
         );
       }
 
-      return response;
+      return true;
     } catch (error) {
-      throw error;
+      console.error("Slack 메시지 전송 중 오류:", error);
+      return false;
     }
   }
 }
