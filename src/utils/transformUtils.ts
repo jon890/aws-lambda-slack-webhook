@@ -181,7 +181,10 @@ export function transformOrderStatusChangeToSlackMessage(
 
   // 주문 상태 텍스트 (한글로 변환)
   const orderStatusMap: Record<string, string> = {
+    DEPOSIT_WAIT: "입금대기",
     PAY_DONE: "결제완료",
+    PRODUCT_PREPARE: "상품준비중",
+    DELIVERY_PREPARE: "배송준비중",
     DELIVERY_ING: "배송중",
     CANCEL_DONE: "취소완료",
   };
