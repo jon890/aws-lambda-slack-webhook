@@ -190,6 +190,8 @@ export function transformOrderStatusChangeToSlackMessage(
     PRODUCT_PREPARE: `:package: *[웹] ${receiverName}님의 상품을 준비중입니다.* :package:`,
     DELIVERY_PREPARE: `:inbox_tray: *[웹] ${receiverName}님의 배송을 준비중입니다.* :inbox_tray:`,
     DELIVERY_ING: `:truck: *[웹] ${receiverName}님의 상품이 배송중입니다.* :truck:`,
+    DELIVERY_DONE: `:mailbox_with_mail: *[웹] ${receiverName}님의 상품이 배달완료되었습니다.* :mailbox_with_mail:`,
+    BUY_CONFIRM: `:sparkles: *[웹] ${receiverName}님이 주문을 확정하셨습니다.* :sparkles:`,
     CANCEL_DONE: `:sweat_drops: *[웹] ${receiverName}님이 주문을 취소하였습니다.* :sweat_drops:`,
   };
 

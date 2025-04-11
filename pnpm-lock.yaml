@@ -7,10 +7,6 @@ settings:
 importers:
 
   .:
-    dependencies:
-      dotenv:
-        specifier: ^16.4.7
-        version: 16.4.7
     devDependencies:
       '@types/aws-lambda':
         specifier: ^8.10.148
@@ -30,10 +26,6 @@ packages:
   '@types/node@22.14.0':
     resolution: {integrity: sha512-Kmpl+z84ILoG+3T/zQFyAJsU6EPTmOCj8/2+83fSN6djd6I4o7uOuGIH6vq3PrjY5BGitSbFuMN18j3iknubbA==}
 
-  dotenv@16.4.7:
-    resolution: {integrity: sha512-47qPchRCykZC03FhkYAhrvwU4xDBFIj1QPqaarj6mdM/hgUzfPHcpkHJOn3mJAufFeeAxAzeGsr5X0M4k6fLZQ==}
-    engines: {node: '>=12'}
-
   typescript@5.8.2:
     resolution: {integrity: sha512-aJn6wq13/afZp/jT9QZmwEjDqqvSGp1VT5GVg+f/t6/oVyrgXM6BY1h9BRh/O5p3PlUPAe+WuiEZOmb/49RqoQ==}
     engines: {node: '>=14.17'}
@@ -49,8 +41,6 @@ snapshots:
   '@types/node@22.14.0':
     dependencies:
       undici-types: 6.21.0
-
-  dotenv@16.4.7: {}
 
   typescript@5.8.2: {}
 
