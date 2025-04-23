@@ -15,6 +15,8 @@ alwaysApply: true
 - 기본적으로 `type`을 사용합니다.
 - 확장이 필요한 경우에만 `interface`를 사용합니다.
 - 타입 이름은 파스칼 케이스(PascalCase)로 작성합니다.
+- 주석은 코드를 이해하기 어려운 특별한 상황인 경우에만 사용
+- 타입파일은 기본적으로 `src/types/**.d.ts`로 작성하도록한다.
 
 ```typescript
 // 좋은 예시
