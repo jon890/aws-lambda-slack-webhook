@@ -1,4 +1,6 @@
-import { OrderEventData, OrderStatusChangeData, SlackMessage } from "../types";
+import type { OrderEventData } from "../types/order";
+import type { OrderStatusChangeData } from "../types/orderStatus";
+import type { SlackMessage } from "../types/slack";
 
 /**
  * 주문 금액을 포맷팅하는 함수

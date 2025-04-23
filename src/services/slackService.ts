@@ -1,4 +1,4 @@
-import { SlackMessage } from "../types";
+import type { SlackMessage } from "../types/slack";
 
 /**
  * Slack 웹훅으로 메시지를 전송하는 서비스

@@ -1,10 +1,7 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
-import { OrderEventData, OrderStatusChangeData } from "./types";
-import {
-  transformOrderEventToSlackMessage,
-  transformOrderStatusChangeToSlackMessage,
-} from "./utils/transformUtils";
 import { SlackService } from "./services/slackService";
+import type { OrderEventData } from "./types/order";
+import type { OrderStatusChangeData } from "./types/orderStatus";
 import {
   getOrderCreationWebhookUrl,
   getOrderStatusChangeWebhookUrl,
@@ -13,6 +10,10 @@ import {
   createErrorResponse,
   createSuccessResponse,
 } from "./utils/responseUtils";
+import {
+  transformOrderEventToSlackMessage,
+  transformOrderStatusChangeToSlackMessage,
+} from "./utils/transformUtils";
 
 /**
  * Lambda 핸들러 함수
