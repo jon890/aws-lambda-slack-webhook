@@ -3,11 +3,12 @@ description:
 globs: 
 alwaysApply: true
 ---
-# AWS Lambda Slack Webhook 프로젝트 기본 규칙
+# AWS Lambda Slack Webhook 프로젝트 규칙
 
 ## 프로젝트 개요
 - 이 프로젝트는 AWS Lambda를 사용하여 외부 요청을 받아 Slack 웹훅으로 전송하는 TypeScript 애플리케이션입니다.
-- API Gateway -> Lambda 프록시 통합으로 사용해야 합니다.
+- API Gateway -> Lambda 프록시 통합으로 사용됩니다.
+- 여러 이벤트 타입(주문 생성, 주문 상태 변경, Cafe24 주문)을 지원합니다.
 
 ## 코드 스타일 가이드
 
@@ -15,9 +16,14 @@ alwaysApply: true
 - 기본적으로 `type`을 사용합니다.
 - 확장이 필요한 경우에만 `interface`를 사용합니다.
 - 타입 이름은 파스칼 케이스(PascalCase)로 작성합니다.
-- 주석은 코드를 이해하기 어려운 특별한 상황인 경우에만 사용
-- 타입파일은 기본적으로 `src/types/**.d.ts`로 작성하도록한다.
-- http 통신을 위해서, axios를 사용하지 않고, fetch를 사용해서 처리할 수 있도록 한다.
+- 주석은 코드를 이해하기 어려운 특별한 상황인 경우에만 사용합니다.
+- 타입 파일은 기본적으로 `src/types/**.d.ts`로 작성합니다.
+- HTTP 통신을 위해서는 axios를 사용하지 않고, fetch를 사용합니다.
+
+### 파일 구조
+- 타입은 도메인별로 분리하여 `.d.ts` 파일로 관리합니다.
+- 배럴 파일(index.ts)을 사용하지 않고 각 모듈을 직접 임포트합니다.
+- 파서 로직은 `src/parser` 디렉토리에 이벤트 타입별로 분리합니다.
 
 ### 환경 변수 관리
 - 환경 변수는 `envUtils.ts` 파일의 유틸리티 함수를 통해 접근합니다.
@@ -32,40 +38,80 @@ const webhookUrl = getSlackWebhookUrl();
 ```
 
 ### 프로젝트 구조
-- `src/types`: 타입 정의
-- `src/services`: 서비스 클래스 (예: SlackService)
-- `src/utils`: 유틸리티 함수 (예: 환경 변수, 데이터 변환)
+- `src/types`: 타입 정의 (파일 확장자는 `.d.ts` 사용)
+  - `order.d.ts`: 주문 관련 타입
+  - `orderStatus.d.ts`: 주문 상태 변경 관련 타입
+  - `slack.d.ts`: Slack 메시지 관련 타입
+  - `cafe24.d.ts`: Cafe24 관련 타입
+  - `lambda.d.ts`: Lambda 응답 관련 타입
+- `src/parser`: 이벤트 파서 함수 (이벤트 데이터를 Slack 메시지로 변환)
+  - `formatUtils.ts`: 공통 형식 변환 유틸리티
+  - `orderEventParser.ts`: 주문 이벤트 파서
+  - `orderStatusChangeParser.ts`: 주문 상태 변경 이벤트 파서
+  - `cafe24OrderParser.ts`: Cafe24 주문 이벤트 파서
+- `src/services`: 서비스 클래스 (SlackService)
+- `src/utils`: 유틸리티 함수
+  - `envUtils.ts`: 환경 변수 관리
+  - `responseUtils.ts`: API 응답 생성
+  - `eventTypeParser.ts`: 이벤트 타입 파싱 및 파서 매핑
 - `src/index.ts`: AWS Lambda 핸들러 함수
+
+### 이벤트 타입과 파서 관리
+
+이벤트 타입과 파서 함수는 `eventTypeParser.ts`에서 중앙 관리합니다:
+
+```typescript
+// 이벤트 타입 상수
+export const EVENT_TYPES = {
+  CREATE_ORDER: "CREATE_ORDER",
+  ORDER_STATUS_CHANGE: "ORDER_STATUS_CHANGE",
+  CAFE24_ORDER: "CAFE24_ORDER",
+} as const;
+
+// 이벤트 타입별 데이터 타입 정의
+export type EventData = {
+  [EVENT_TYPES.CREATE_ORDER]: OrderEventData;
+  [EVENT_TYPES.ORDER_STATUS_CHANGE]: OrderStatusChangeData[];
+  [EVENT_TYPES.CAFE24_ORDER]: Cafe24OrderEventData;
+};
+
+// 이벤트 타입별 파서 함수 매핑
+export const EVENT_PARSERS = {
+  [EVENT_TYPES.CREATE_ORDER]: parseOrderEvent,
+  [EVENT_TYPES.ORDER_STATUS_CHANGE]: (data: OrderStatusChangeData[]) => {
+    return parseOrderStatusChange(data[0]);
+  },
+  [EVENT_TYPES.CAFE24_ORDER]: parseCafe24Order,
+} as const;
+
+// 이벤트 타입에 맞는 파서 함수를 가져오는 함수
+export function getParserForEventType<T extends EventType>(type: T): EventParser<T> {
+  return EVENT_PARSERS[type] as EventParser<T>;
+}
+```
+
+#### 새로운 이벤트 타입 추가 방법
+
+1. `types` 디렉토리에 새 이벤트 타입에 대한 타입 정의 추가
+2. `parser` 디렉토리에 새 이벤트 파서 함수 추가
+3. `eventTypeParser.ts`에서 이벤트 타입, 데이터 타입, 파서 함수 매핑 추가
 
 ### AWS Lambda 배포
 - AWS Lambda 콘솔에서는 다음 환경 변수를 설정해야 합니다:
   - `SLACK_WEBHOOK_URL`: Slack 웹훅 URL (필수)
+  - `ORDER_CREATION_WEBHOOK_URL`: 주문 생성 채널 Slack 웹훅 URL
+  - `ORDER_STATUS_CHANGE_WEBHOOK_URL`: 주문 상태 변경 채널 Slack 웹훅 URL
   - `NODE_ENV`: production
+
+### 이벤트 타입 전달 방식
+- 이벤트 타입은 쿼리 파라미터로 전달합니다: `?eventType=CREATE_ORDER`
+- 지원하는 이벤트 타입: `CREATE_ORDER`, `ORDER_STATUS_CHANGE`, `CAFE24_ORDER`
 
 ### 개발 워크플로우
 1. 의존성 설치: `pnpm install`
 2. 개발 모드 실행: `pnpm dev`
 3. 빌드: `pnpm build`
 4. 배포 패키지 생성: `pnpm zip`
-
-### 데이터 흐름
-1. 외부 요청 수신 (JSON 형식)
-2. 데이터 파싱 및 검증
-3. Slack 메시지 형식으로 변환
-4. Slack 웹훅 호출
-5. 응답 반환
-
-### 주문 이벤트 처리
-- `eventType`이 'CREATE_ORDER'인 경우 주문 이벤트로 처리합니다.
-- 주문 데이터는 `OrderEventData` 타입으로 파싱됩니다.
-- 슬랙 메시지는 다음 정보를 포함합니다:
-  - 플랫폼 타입 (웹/앱)
-  - 주문자명
-  - 주문번호
-  - 주문상품 목록
-  - 결제수단
-  - 실결제금액
-  - 비회원구매 여부
 
 ### 오류 처리
 - 모든 API 엔드포인트에서 try-catch 블록 사용
@@ -81,264 +127,3 @@ const webhookUrl = getSlackWebhookUrl();
 - 패키지 매니저로 `pnpm`을 사용합니다.
 - 의존성 추가: `pnpm add [패키지명]`
 - 개발 의존성 추가: `pnpm add -D [패키지명]`
-
-
-## 주문 생성 (CREATE_ORDER) 샘플 스키마
-
-```json
-// 샘플 데이터 및 파라미터 정의
-{
-    "eventType": "CREATE_ORDER", //이벤트명
-    "order": {
-        "orderNo": "2021100201234567890", // 주문번호
-        "mallNo": 30973, // 몰번호
-        "serviceNo": 30388, // 서비스 번호
-        "memberNo": 8411244, // 회원번호
-        "memberYn": "Y", // 회원여부
-        "ordererName": "홍길동", // 주문자명
-        "ordererContact1": "010-1234-1234", // 주문자 핸드폰 번호
-        "ordererContact2": "010-1234-1234", // 주문자 전화 번호
-        "ordererEmail": "honggildong@naver.com", // 주문자 이메일
-        "payType": "CREDIT_CARD", // PG타입(페이코/KCP 등)
-        "pgType": "KCP", // 결제타입(페이코/신용카드 등)
-        "platformType": "MOBILE_WEB", // 플렛폼 타입 (PC/MOBILE_WEB 등)
-        "lastPayAmt": 185000.00, // 최종결제금액
-        "lastSubPayAmt": 0.00, // 최종 적립금 결제금액
-        "lastStandardAmt": 329000.00, // 최종상품금액(할인제외)
-        "lastDeliveryAmt": 0.00, // 최종배송금액
-        "lastRemoteDeliveryAmt": 0.00, // 최종지역별추가배송금액
-        "lastImmediateDiscountAmt": 144000.00, // 최종즉시할인금액
-        "lastAdditionalDiscountAmt": 0.00, // 최종추가할인금액
-        "lastCartCouponDiscountAmt": 0.00, // 최종주문쿠폰할인금액
-        "lastProductCouponDiscountAmt": 0.00, // 최종상품쿠폰할인금액
-        "lastTaxFreeAmt": 0.00, // 최종비과세금액
-        "lastTaxableAmt": 168181.00, // 최종과세금액
-        "lastVatAmt": 16819.00, // 최종부과세액
-        "firstSalesTaxAmt": 0.00, // 최초부과세액
-        "lastSalesTaxAmt": 0.00, // 최종부과세액
-        "firstCustomsDutyAmt": 0.00, // 최초관부가세
-        "lastCustomsDutyAmt": 0.00, // 최종관부가세
-        "registerYmdt": "2021-10-25 13:53:18", // 등록일
-        "trackingKey": "trackingKey", // 쇼핑채널링-추적키
-        "cartCouponIssueNo": 12, // 장바구니쿠폰 발급 번호
-        "channelType": null // 유입 경로
-        "orderProducts": [
-            {
-                "orderProductNo": 50000000, // 주문상품번호
-                "mallProductNo": 100000000, // 상품번호
-                "productName": "상품명",
-                "productManagementCd": "", // 상품관리 코드
-                "hsCode": "",
-                "eanCode": null,
-                "partnerNo": 50000, // 파트너 번호
-                "lastProductCouponDiscountAmt": 0.00, // 상품 쿠폰 할인액
-                "productCouponIssueNo": 13, // 사용한 상품 쿠폰 번호
-                "orderProductOptions": [
-                    {
-                        "orderProductOptionNo": 5062925, // 주문상품옵션번호
-                        "orderNo": "2021100201234567890", // 주문번호
-                        "memberNo": 100000, // 회원번호
-                        "userInputs": [ // 구매자 입력형 옵션
-                            {
-                              "inputLabel": "색깔", // 구매자 작성형 옵션 이름
-                              "inputValue":"검정색", //구매자 입력형 옵션 값
-                            }
-                        ],
-                        "serviceNo": 30000, // 서비스 번호
-                        "mallNo": 1000, // 몰번호
-                        "mallProductNo": 10000000, // 상품번호
-                        "productName": "상품명",
-                        "mallOptionNo": 6000000, // 상품옵션번호
-                        "mallAdditionalProductNo": 0, // 추가 상품 번호
-                        "optionUseYn": "Y", // 옵션 사용 여부
-                        "optionName": "옵션명",
-                        "optionValue": "옵션값",
-                        "imageUrl": "//rlyfaazj0.toastcdn.net/...", // 상품 이미지 url
-                        "orderCnt": 1, // 주문건수
-                        "originalOrderCnt": 1, // 최초 주문 수량
-                        "salePrice": 329000.00, // 판매 가격
-                        "immediateDiscountAmt": 144000.00, // 즉시 할인 가격
-                        "addPrice": 0.00, // 추가 금액
-                        "additionalDiscountAmt": 0.00, // 추가 할인 금액
-                        "partnerChargeAmt": 0.00, // 파트너 부담액
-                        "adjustedAmt": 185000.00, // 조정된 상품 금액
-                        "orderStatusType": "PAY_DONE", // 주문옵션상태
-                        "claimStatusType": null, // 클레임 상태
-                        "orderYmdt": "2021-10-25 13:53:18", // 주문일시
-                        "payYmdt": "2021-10-25 13:54:38", // 결제일시
-                        "orderAcceptYmdt": null, // 주문접수일시
-                        "releaseReadyYmdt": null, // 배송준비일시
-                        "releaseYmdt": null, // 배송일시
-                        "deliveryCompleteYmdt": null, // 배송완료일시
-                        "buyConfirmYmdt": null, // 구매확정일시
-                        "registerYmdt": "2021-10-25 13:53:18", // 주문옵션 생성일시
-                        "trackingKey": "platform=MO&rid=851184319&aid=641_1_3_1025&mid=TMS", // 주문추적키 (쇼핑몰에서 생성되어 주문번호를 특정하는 구분값)
-                        "deliveryNo": 400000, // 배송번호
-                        "deliveryInternationalYn": false, // 해외배송여부
-                        "optionManagementCd": "", // 옵션 관리 코드
-                        "deliveryTemplateNo": 50000, // 배송 템플릿 번호
-                        "deliveryCompanyType": "CJ", // 배송 업체
-                        "invoiceNo": null, // 송장번호
-                        "receiverName": "홍길동", // 받는 사람 이름
-                        "receiverContact1": "010-1234-5678", //수령자 휴대폰번호
-                        "receiverContact2": "", //수령자 전화번호
-                        "zipCd": 12345, //배송지 우편번호
-                        "receiverAddress": "", // 주소
-                        "receiverDetailAddress": "", // 상세 주소
-                        "receiverJibunAddress": "", //지번 주소
-                        "usesShippingInfoLaterInput": false, // 나중배송지 입력 여부
-                        "shippingInfoLaterInputContact": null, // 나중배송지 입력 전화 번호
-                        "encryptedShippingNo": null, // 나중배송지 입력 시 사용하는 암호화된 배송번호
-                        "shippingEmptyAutoCancelYmdt" : "2023-10-25 13:54:38", // 배송지 미입력 시 자동 주문취소 일시
-                        "customsIdNumber": '', // 개인통관고유부호
-                    }
-                ]
-            }
-        ]
-    },
-    "pay": {
-        "pgType": "KCP", // PG 타입
-        "payType": "CREDIT_CARD", // 결제 유형
-        "payYmdt": "2021-10-25 13:54:38", // 결제일시
-        "payStatusType": "DONE", // 결제상태
-        "payInfo": {
-            "payType": "CREDIT_CARD", // 결제 유형
-            "cardInfo": {
-                "cardCompany": "SHINHAN", // 카드사
-                "cardCode": "CCLG", // PG 카드사 코드(PG별로 다름)
-                "cardName": "신한카드", // 카드사명
-                "approveYmdt": "2021-10-25 13:54:38", // 결제승인시간
-                "cardNo": "*****", // 카드번호
-                "cardApprovalNumber": "****", // 결제승인번호
-                "noInterest": true, // 무이자여부
-                "installmentPeriod": 5, // 할부기간
-                "cardAmt": 185000 // 신용카드 결제금액
-            },
-            "bankInfo": {
-                "bank" : "KDB", // 은행
-                "bankCode": "", // PG 은행코드 (PG별로 다름)
-                "bankName": "", // 은행명
-                "account": "", // 계좌번호
-                "bankAmt": 1000, // 입금해야할 금액
-                "depositAmt": 1000, // 실제 입금금액
-                "depositYmdt": "2021-10-25 13:54:38", // 입금일시
-                "remitterName": "", // 입금자명
-                "depositorName": "", // 예금주명
-                "paymentExpirationYmdt": "2021-10-25 13:54:38" // 입금 마감일
-            },
-            "cashAuthNo": "", // 현금영수증 승인번호
-            "cashNo": "", // 현금영수증 거래번호
-            "tradeNo": "3000000", // 거래번호
-            "escrowYn": "N", // 에스크로 결제 여부
-            "payAmt": 185000, // PG결제 금액
-            "sellerCouponAmt": 0, // 가맹점 발행쿠폰
-            "pgCouponAmt": 0, // PG 쿠폰 금액
-            "cardCouponAmt": 0, // 카드사 쿠폰 금액
-            "pointAmt": 0, // PG 포인트
-            "paymentKey": {
-                "pgType": "KCP", // PG 유형
-                "key": "key", // PG Key
-                "etcInfos": {} // 기타 결제 키 관련 정보
-            },
-            "taxType": "DUTY", // 과세유형 (과세,면세,영세)
-            "mobileInfo": { // 핸드폰 결제 정보
-                "mobileNo": "010-1234-5678", // 결제 핸드폰 번호
-                "mobileCompany": "" // 통신사
-            },
-            "naverPayInfo": { // 네이버 페이 결제 정보
-                "paymentMeans": "", // 네이버 페이 결제 수단
-                "paymentDueDate": "", // 입금 기한
-                "paymentNumber":"", // PG승인번호
-                "orderDiscountAmount": 1000, // 주문 할인액
-                "generalPaymentAmount": 1000, // 일반결제수단최종결제금액
-                "naverMileagePaymentAmount": 1000, // 네이버페이 포인트 최종 결제 금액
-                "chargeAmountPaymentAmount": 1000, // 충전금최종결제금액
-                "checkoutAccumulationPaymentAmount": 1000, // 네이버페이 적립금 최종 결제 금액
-                "orderType": "", // 주문 유형 구분(네이버페이/통합장바구니)
-                "payLocationType": "", // 결제 위치 구분(PC/MOBILE)
-                "paymentCoreType": "", // 결제 구분(네이버결제/PG 결제)
-                "payLaterPaymentAmount": 1000 // 후불결제 금액(네이버결제/PG 결제)
-            }
-        }
-    }
-}
-```
-
-## 주문상태 변경 (CHANGE_ORDER_STATUS) 스키마
-
-```json
-[
-    {
-          "eventType": "CHANGE_ORDER_STATUS", //이벤트명
-          "orderProductOptionNo": 12345, // 주문상품 옵션번호
-          "orderNo": "202110110111111", // 주문번호
-          "memberNo": 12345, // 회원번호
-          "userInputs": [ // 구매자 입력형 옵션
-              {
-                "inputLabel":"색깔", //구매자 작성형 옵션 이름
-                "inputValue":"검정색", //구매자 입력형 옵션 값
-              }
-          ],
-          "serviceNo": 12345, // 서비스번호
-          "mallNo": 12345, // 몰번호
-          "deliveryNo": 12345, // 배송번호
-          "deliveryTemplateNo": 50000, // 배송 템플릿 번호
-          "deliveryInternationalYn":false, // 해외배송여부
-          "mallProductNo": 100000000, // 상품번호
-          "productName": "상품명",
-          "mallOptionNo": 6000000, // 상품옵션번호
-          "mallAdditionalProductNo": 0, // 추가 상품 번호
-          "optionUseYn": "Y", // 옵션 사용 여부
-          "optionName": "옵션명",
-          "optionValue": "옵션값",
-          "imageUrl": "//rlyfaazj0.toastcdn.net/...", // 상품 이미지 url
-          "orderCnt": 1, // 주문건수
-          "originalOrderCnt": 1, // 최초 주문 수량
-          "salePrice": 329000.00, // 판매 가격
-          "immediateDiscountAmt": 144000.00, // 즉시 할인 가격
-          "addPrice": 0.00, // 추가 금액
-          "additionalDiscountAmt": 0.00, // 추가 할인 금액
-          "partnerChargeAmt": 0.00, // 파트너 부담액
-          "adjustedAmt": 185000.00, // 조정된 상품 금액
-          "orderStatusType": "PAY_DONE", // 주문옵션상태
-          "claimStatusType": null, // 클레임 상태
-          "orderYmdt": "2021-10-25 13:53:18", // 주문일시
-          "payYmdt": "2021-10-25 13:54:38", // 결제일시
-          "orderAcceptYmdt": null, // 주문접수일시
-          "releaseReadyYmdt": null, // 배송준비일시
-          "releaseYmdt": null, // 배송일시
-          "deliveryCompleteYmdt": null, // 배송완료일시
-          "buyConfirmYmdt": null, // 구매확정일시
-          "registerYmdt": "2021-10-25 13:53:18", // 주문옵션 생성일시
-          "trackingKey": "platform=MO&rid=851184319&aid=641_1_3_1025&mid=TMS", // 주문추적키 (쇼핑몰에서 생성되어 주문번호를 특정하는 구분값)
-          "deliveryCompanyType": "CJ", // 배송 업체
-          "invoiceNo": : "1212", // 송장번호
-          "receiverName": "홍길동", // 받는 사람 이름
-          "zipCd": 12345, // 배송지 우편 번호
-          "address": "경기도 성남시 분당구 대왕판교로645번길 12", // 배송지 주소
-          "detailAddress": "16 NHN 플레이뮤지엄", // 배송지 상세 주소
-          "jibunAddress": "경기도 성남시 분당구 대왕판교로645번길", // 배송지 지번 주소
-          "receiverCity": "", // 배송지 해외(도시)
-          "receiverState": "", // 배송지 해외(주)
-          "contact1": "010-0000-0000", // 수령자 연락처1
-          "contact2": "", // 수령자 연락처2
-          "productManagementCd": "", // 상품관리 코드
-          "optionManagementCd": "", // 옵션관리 코드
-          "usesShippingInfoLaterInput": false, // 나중배송지 입력 여부
-          "shippingInfoLaterInputContact": null, // 나중배송지 입력 전화 번호
-          "encryptedShippingNo": null, // 나중배송지 입력 시 사용하는 암호화된 배송번호
-          "retrieveInvoiceUrl": null // 배송조회 할 수 있는 url
-          "isFreeGift": false, // 사은품 여부
-          "updateAdminNo": 0, // 해당 주문의 상태를 마지막으로 바꾼 어드민의 번호
-          "extraManagementCd": "", // 옵션의 추가관리코드 (상품 등록/수정에서 설정 가능)
-          "order": {
-          "extraData": "{"language": "KO"}",
-          "currencyCode": "KRW",
-          "exchangeRate": null
-        },
-          "claimNo": 123,
-          "requestChannelType": "USER" // 상태변경이 요청된 채널 [SYSTEM, SERVICE, PARTNER, BATCH, USER, SERVER]
-          "channelType": null // 유입 경로
-  }
-]
-```

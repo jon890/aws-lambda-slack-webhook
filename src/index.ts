@@ -1,4 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
+import { orderStatusChangeParser } from "./parser/orderStatusChangeParser";
 import { SlackService } from "./services/slackService";
 import type { OrderStatusChangeData } from "./types/orderStatus";
 import {
@@ -6,16 +7,15 @@ import {
   getOrderStatusChangeWebhookUrl,
 } from "./utils/envUtils";
 import {
+  EVENT_TYPES,
+  EventData,
+  getParserForEventType,
+  parseEventType,
+} from "./utils/eventTypeParser";
+import {
   createErrorResponse,
   createSuccessResponse,
 } from "./utils/responseUtils";
-import {
-  parseEventType,
-  EVENT_TYPES,
-  getParserForEventType,
-  EventData,
-} from "./utils/eventTypeParser";
-import { parseOrderStatusChange } from "./parser/orderStatusChangeParser";
 
 /**
  * Lambda 핸들러 함수
@@ -45,13 +45,16 @@ export const handler = async (
     let success = false;
 
     switch (eventType) {
-      case EVENT_TYPES.CREATE_ORDER:
-      case EVENT_TYPES.CAFE24_ORDER: {
-        // 일반 주문 및 Cafe24 주문은 동일한 처리 방식 사용
-        const eventData = parsedBody as EventData[typeof eventType];
+      case EVENT_TYPES.CREATE_ORDER: {
         const parser = getParserForEventType(eventType);
-        const slackMessage = parser(eventData);
+        const slackMessage = parser.parse(parsedBody);
+        success = await orderCreationService.sendMessage(slackMessage);
+        break;
+      }
 
+      case EVENT_TYPES.CAFE24_ORDER: {
+        const parser = getParserForEventType(eventType);
+        const slackMessage = parser.parse(parsedBody);
         success = await orderCreationService.sendMessage(slackMessage);
         break;
       }
@@ -60,7 +63,7 @@ export const handler = async (
         const orderStatusChangeData = parsedBody as OrderStatusChangeData[];
 
         for (const datum of orderStatusChangeData) {
-          const slackMessage = parseOrderStatusChange(datum);
+          const slackMessage = orderStatusChangeParser.parse(datum);
 
           if (datum.orderStatusType === "CANCEL_DONE") {
             success = await orderCreationService.sendMessage(slackMessage);
