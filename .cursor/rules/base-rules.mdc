@@ -17,23 +17,7 @@ alwaysApply: true
 - 타입 이름은 파스칼 케이스(PascalCase)로 작성합니다.
 - 주석은 코드를 이해하기 어려운 특별한 상황인 경우에만 사용
 - 타입파일은 기본적으로 `src/types/**.d.ts`로 작성하도록한다.
-
-```typescript
-// 좋은 예시
-export type UserData = {
-  id: string;
-  name: string;
-};
-
-// 확장이 필요한 경우 interface 사용
-interface BaseResponse {
-  status: number;
-}
-
-interface DetailedResponse extends BaseResponse {
-  data: unknown;
-}
-```
+- http 통신을 위해서, axios를 사용하지 않고, fetch를 사용해서 처리할 수 있도록 한다.
 
 ### 환경 변수 관리
 - 환경 변수는 `envUtils.ts` 파일의 유틸리티 함수를 통해 접근합니다.

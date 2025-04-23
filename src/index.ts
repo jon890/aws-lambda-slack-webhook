@@ -1,6 +1,5 @@
 import { APIGatewayProxyEvent, APIGatewayProxyResult } from "aws-lambda";
 import { SlackService } from "./services/slackService";
-import type { OrderEventData } from "./types/order";
 import type { OrderStatusChangeData } from "./types/orderStatus";
 import {
   getOrderCreationWebhookUrl,
@@ -11,9 +10,12 @@ import {
   createSuccessResponse,
 } from "./utils/responseUtils";
 import {
-  transformOrderEventToSlackMessage,
-  transformOrderStatusChangeToSlackMessage,
-} from "./utils/transformUtils";
+  parseEventType,
+  EVENT_TYPES,
+  getParserForEventType,
+  EventData,
+} from "./utils/eventTypeParser";
+import { parseOrderStatusChange } from "./parser/orderStatusChangeParser";
 
 /**
  * Lambda 핸들러 함수
@@ -24,59 +26,57 @@ export const handler = async (
   event: APIGatewayProxyEvent
 ): Promise<APIGatewayProxyResult> => {
   try {
-    // 요청 바디가 없는 경우 처리
     if (!event.body) {
       return createErrorResponse(400, "요청 본문이 필요합니다.");
     }
 
-    // 쿼리 파라미터에서 이벤트 타입 확인
-    const queryParams = event.queryStringParameters || {};
-    const eventType = queryParams.eventType;
-
+    const eventType = parseEventType(event);
     if (!eventType) {
-      return createErrorResponse(400, "eventType 쿼리 파라미터가 필요합니다.");
+      return createErrorResponse(400, "유효한 이벤트 타입이 필요합니다.");
     }
 
-    // 요청 바디 파싱
     const parsedBody = JSON.parse(event.body);
 
-    // 슬랙 서비스 인스턴스 미리 생성
-    const orderCreationWebhook = getOrderCreationWebhookUrl();
-    const statusChangeWebhook = getOrderStatusChangeWebhookUrl();
-
-    const orderCreationService = new SlackService(orderCreationWebhook);
-    const statusChangeService = new SlackService(statusChangeWebhook);
+    const orderCreationService = new SlackService(getOrderCreationWebhookUrl());
+    const statusChangeService = new SlackService(
+      getOrderStatusChangeWebhookUrl()
+    );
 
     let success = false;
 
-    // 이벤트 타입에 따라 처리
-    if (eventType === "CREATE_ORDER") {
-      // 주문 생성 이벤트 처리
-      const orderEventData = parsedBody as OrderEventData;
-      const slackMessage = transformOrderEventToSlackMessage(orderEventData);
+    switch (eventType) {
+      case EVENT_TYPES.CREATE_ORDER:
+      case EVENT_TYPES.CAFE24_ORDER: {
+        // 일반 주문 및 Cafe24 주문은 동일한 처리 방식 사용
+        const eventData = parsedBody as EventData[typeof eventType];
+        const parser = getParserForEventType(eventType);
+        const slackMessage = parser(eventData);
 
-      // 주문 생성 채널로 메시지 전송
-      success = await orderCreationService.sendMessage(slackMessage);
-    } else if (eventType === "ORDER_STATUS_CHANGE") {
-      // 주문 상태 변경 이벤트 처리
-      const orderStatusChangeData = parsedBody as OrderStatusChangeData[];
-      for (const datum of orderStatusChangeData) {
-        const slackMessage = transformOrderStatusChangeToSlackMessage(datum);
-
-        // 주문 상태에 따라 적절한 채널로 메시지 전송
-        if (datum.orderStatusType === "CANCEL_DONE") {
-          success = await orderCreationService.sendMessage(slackMessage);
-          success = await statusChangeService.sendMessage(slackMessage);
-        } else {
-          success = await statusChangeService.sendMessage(slackMessage);
-        }
+        success = await orderCreationService.sendMessage(slackMessage);
+        break;
       }
-    } else {
-      // 지원하지 않는 이벤트 타입
-      return createErrorResponse(
-        400,
-        `지원하지 않는 이벤트 타입: ${eventType}`
-      );
+
+      case EVENT_TYPES.ORDER_STATUS_CHANGE: {
+        const orderStatusChangeData = parsedBody as OrderStatusChangeData[];
+
+        for (const datum of orderStatusChangeData) {
+          const slackMessage = parseOrderStatusChange(datum);
+
+          if (datum.orderStatusType === "CANCEL_DONE") {
+            success = await orderCreationService.sendMessage(slackMessage);
+            success = await statusChangeService.sendMessage(slackMessage);
+          } else {
+            success = await statusChangeService.sendMessage(slackMessage);
+          }
+        }
+        break;
+      }
+
+      default:
+        return createErrorResponse(
+          400,
+          `지원하지 않는 이벤트 타입: ${eventType}`
+        );
     }
 
     if (success) {
