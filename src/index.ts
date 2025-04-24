@@ -88,9 +88,22 @@ export const handler = async (
         status: 200,
       });
     } else {
+      console.error(
+        "웹훅 처리 중 오류가 발생했습니다.",
+        "body",
+        event.body,
+        "eventType",
+        eventType
+      );
       return createErrorResponse(500, "메시지 전송 중 오류가 발생했습니다.");
     }
   } catch (error) {
+    console.error(
+      "웹훅 처리 중 오류가 발생했습니다.",
+      error,
+      "body",
+      event.body
+    );
     return createErrorResponse(
       500,
       error instanceof Error
