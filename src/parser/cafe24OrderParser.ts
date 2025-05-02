@@ -30,10 +30,13 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
       ordering_product_code,
       paid,
       shipping_fee,
+      member_id,
+      first_order,
     } = resource;
 
-    // 결제 상태 텍스트
     const paymentStatus = paid === "T" ? "결제완료" : "미결제";
+    const memberStatus = member_id ? "회원" : "비회원";
+    const isFirstOrder = first_order === true ? "예" : "아니오";
 
     const productNames = ordering_product_name.split(",");
     const productCodes = ordering_product_code.split(",");
@@ -55,6 +58,9 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
 *실결제금액:* ${formatPrice(actual_payment_amount)} 원
 *이메일:* ${buyer_email}
 *연락처:* ${buyer_cellphone}
+*회원상태:*
+  - 회원여부: ${memberStatus}${member_id ? `\n  - 회원ID: ${member_id}` : ""}
+  - 첫주문: ${isFirstOrder}
 
 *추가정보:*
   - 쇼핑몰: ${mall_id}
