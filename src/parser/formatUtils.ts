@@ -1,22 +1,3 @@
-import dayjs from "dayjs";
-import utc from "dayjs/plugin/utc";
-import timezone from "dayjs/plugin/timezone";
-
-// dayjs 설정 초기화 함수
-export function initializeDayjs() {
-  // 플러그인 확장
-  dayjs.extend(utc);
-  dayjs.extend(timezone);
-
-  // 한국 시간대 설정
-  dayjs.tz.setDefault("Asia/Seoul");
-}
-
-// 초기화 함수 호출 (실제 환경에서만)
-if (process.env.NODE_ENV !== "test") {
-  initializeDayjs();
-}
-
 /**
  * 주문 금액을 포맷팅하는 함수
  * @param amount 금액
@@ -82,21 +63,43 @@ export function getPlatformTypeText(platformType: string): string {
 
 /**
  * ISO 형식 날짜 문자열을 읽기 쉬운 형식으로 변환 (YYYY-MM-DD HH:MM)
- * @param isoDateString ISO 형식의 날짜 문자열 (예: 2020-07-17T15:28:14+09:00)
+ * ISO 8601 타임존을 인식하여 한국 시간(KST)으로 변환
+ * @param isoDateString ISO 형식의 날짜 문자열 (예: 2020-07-17T15:28:14+09:00 또는 2020-07-17T06:28:14Z)
  * @returns 변환된 날짜 문자열 (예: 2020-07-17 15:28)
  */
 export function formatDateString(isoDateString: string): string {
   if (!isoDateString) return "";
 
   try {
-    // 먼저 유효한 날짜인지 확인
+    // Date 객체로 파싱
     const date = new Date(isoDateString);
+
+    // 유효한 날짜인지 확인
     if (isNaN(date.getTime())) {
       throw new Error("Invalid date");
     }
 
-    // dayjs로 날짜 파싱 후 한국 시간대로 변환하여 포맷팅
-    return dayjs(isoDateString).format("YYYY-MM-DD HH:mm");
+    // UTC 기준 시간 구하기
+    const utcYear = date.getUTCFullYear();
+    const utcMonth = date.getUTCMonth();
+    const utcDay = date.getUTCDate();
+    const utcHours = date.getUTCHours();
+    const utcMinutes = date.getUTCMinutes();
+    const utcSeconds = date.getUTCSeconds();
+
+    // UTC 시간을 KST(UTC+9)로 변환
+    const kstDate = new Date(
+      Date.UTC(utcYear, utcMonth, utcDay, utcHours + 9, utcMinutes, utcSeconds)
+    );
+
+    // 포맷팅
+    const year = kstDate.getUTCFullYear();
+    const month = String(kstDate.getUTCMonth() + 1).padStart(2, "0");
+    const day = String(kstDate.getUTCDate()).padStart(2, "0");
+    const hours = String(kstDate.getUTCHours()).padStart(2, "0");
+    const minutes = String(kstDate.getUTCMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
   } catch (e) {
     // 변환 실패 시 원본 문자열 반환
     console.error("날짜 변환 오류:", e);
