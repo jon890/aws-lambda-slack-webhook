@@ -60,3 +60,26 @@ export function getPlatformTypeText(platformType: string): string {
       return "웹";
   }
 }
+
+/**
+ * ISO 형식 날짜 문자열을 읽기 쉬운 형식으로 변환 (YYYY-MM-DD HH:MM)
+ * @param isoDateString ISO 형식의 날짜 문자열 (예: 2020-07-17T15:28:14+09:00)
+ * @returns 변환된 날짜 문자열 (예: 2020-07-17 15:28)
+ */
+export function formatDateString(isoDateString: string): string {
+  if (!isoDateString) return "";
+
+  try {
+    const date = new Date(isoDateString);
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+
+    return `${year}-${month}-${day} ${hours}:${minutes}`;
+  } catch (e) {
+    // 변환 실패 시 원본 문자열 반환
+    return isoDateString;
+  }
+}

@@ -1,7 +1,7 @@
 import type { Cafe24OrderEventData } from "../types/cafe24";
-import type { SlackMessage } from "../types/slack";
 import type { EventParser } from "../types/parser";
-import { formatPrice } from "./formatUtils";
+import type { SlackMessage } from "../types/slack";
+import { formatDateString, formatPrice } from "./formatUtils";
 
 /**
  * Cafe24 주문 이벤트 데이터를 Slack 메시지로 변환하는 파서
@@ -13,7 +13,6 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
    * @returns Slack 메시지 형식
    */
   parse(data: Cafe24OrderEventData): SlackMessage {
-    // 필요한 데이터 추출
     const { event_no, resource } = data;
     const {
       mall_id,
@@ -36,7 +35,6 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
     // 결제 상태 텍스트
     const paymentStatus = paid === "T" ? "결제완료" : "미결제";
 
-    // 상품 정보 포맷팅 (orderEventParser와 유사하게)
     const productNames = ordering_product_name.split(",");
     const productCodes = ordering_product_code.split(",");
     const productTexts: string[] = productNames.map((name, idx) => {
@@ -45,8 +43,10 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
     });
     const productText = productTexts.join("\n");
 
-    const orderDate = order_date;
-    const paymentDateFormatted = payment_date || "미결제";
+    const orderDate = formatDateString(order_date);
+    const paymentDateFormatted = payment_date
+      ? formatDateString(payment_date)
+      : "미결제";
 
     const messageText = `:tada: *[CAFE24] ${buyer_name}님이 구매하셨습니다.* :tada:
 *주문번호:* ${order_id}
