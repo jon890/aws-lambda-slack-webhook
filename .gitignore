@@ -31,3 +31,6 @@ pnpm-debug.log*
 # 운영체제 파일
 .DS_Store
 Thumbs.db 
+
+# 테스트 커버리지
+coverage

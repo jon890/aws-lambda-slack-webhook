@@ -1,3 +1,22 @@
+import dayjs from "dayjs";
+import utc from "dayjs/plugin/utc";
+import timezone from "dayjs/plugin/timezone";
+
+// dayjs 설정 초기화 함수
+export function initializeDayjs() {
+  // 플러그인 확장
+  dayjs.extend(utc);
+  dayjs.extend(timezone);
+
+  // 한국 시간대 설정
+  dayjs.tz.setDefault("Asia/Seoul");
+}
+
+// 초기화 함수 호출 (실제 환경에서만)
+if (process.env.NODE_ENV !== "test") {
+  initializeDayjs();
+}
+
 /**
  * 주문 금액을 포맷팅하는 함수
  * @param amount 금액
@@ -70,16 +89,17 @@ export function formatDateString(isoDateString: string): string {
   if (!isoDateString) return "";
 
   try {
+    // 먼저 유효한 날짜인지 확인
     const date = new Date(isoDateString);
-    const year = date.getFullYear();
-    const month = String(date.getMonth() + 1).padStart(2, "0");
-    const day = String(date.getDate()).padStart(2, "0");
-    const hours = String(date.getHours()).padStart(2, "0");
-    const minutes = String(date.getMinutes()).padStart(2, "0");
+    if (isNaN(date.getTime())) {
+      throw new Error("Invalid date");
+    }
 
-    return `${year}-${month}-${day} ${hours}:${minutes}`;
+    // dayjs로 날짜 파싱 후 한국 시간대로 변환하여 포맷팅
+    return dayjs(isoDateString).format("YYYY-MM-DD HH:mm");
   } catch (e) {
     // 변환 실패 시 원본 문자열 반환
+    console.error("날짜 변환 오류:", e);
     return isoDateString;
   }
 }
