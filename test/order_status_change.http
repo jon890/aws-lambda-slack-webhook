@@ -1,0 +1,77 @@
+POST {{$dotenv BASE_URL}}?eventType=ORDER_STATUS_CHANGE
+Content-Type: application/json
+
+[
+    {
+          "eventType": "CHANGE_ORDER_STATUS",
+          "orderProductOptionNo": 12345, 
+          "orderNo": "202110110111111",
+          "memberNo": 12345,
+          "userInputs": [
+              {
+                "inputLabel":"색깔",
+                "inputValue":"검정색"
+              }
+          ],
+          "serviceNo": 12345,
+          "mallNo": 12345,
+          "deliveryNo": 12345,
+          "deliveryTemplateNo": 50000,
+          "deliveryInternationalYn":false,
+          "mallProductNo": 100000000,
+          "productName": "상품명",
+          "mallOptionNo": 6000000,
+          "mallAdditionalProductNo": 0,
+          "optionUseYn": "Y",
+          "optionName": "옵션명",
+          "optionValue": "옵션값",
+          "imageUrl": "//rlyfaazj0.toastcdn.net/...",
+          "orderCnt": 1,
+          "originalOrderCnt": 1,
+          "salePrice": 329000.00,
+          "immediateDiscountAmt": 144000.00,
+          "addPrice": 0.00,
+          "additionalDiscountAmt": 0.00,
+          "partnerChargeAmt": 0.00,
+          "adjustedAmt": 185000.00,
+          "orderStatusType": "CANCEL_DONE",
+          "claimStatusType": null,
+          "orderYmdt": "2021-10-25 13:53:18",
+          "payYmdt": "2021-10-25 13:54:38",
+          "orderAcceptYmdt": null,
+          "releaseReadyYmdt": null,
+          "releaseYmdt": null,
+          "deliveryCompleteYmdt": null,
+          "buyConfirmYmdt": null,
+          "registerYmdt": "2021-10-25 13:53:18",
+          "trackingKey": "platform=MO&rid=851184319&aid=641_1_3_1025&mid=TMS",
+          "deliveryCompanyType": "CJ",
+          "invoiceNo": "1212",
+          "receiverName": "홍길동",
+          "zipCd": 12345,
+          "address": "경기도 성남시 분당구 대왕판교로645번길 12",
+          "detailAddress": "16 NHN 플레이뮤지엄",
+          "jibunAddress": "경기도 성남시 분당구 대왕판교로645번길",
+          "receiverCity": "",
+          "receiverState": "",
+          "contact1": "010-0000-0000",
+          "contact2": "",
+          "productManagementCd": "",
+          "optionManagementCd": "",
+          "usesShippingInfoLaterInput": false,
+          "shippingInfoLaterInputContact": null,
+          "encryptedShippingNo": null,
+          "retrieveInvoiceUrl": null,
+          "isFreeGift": false,
+          "updateAdminNo": 0,
+          "extraManagementCd": "",
+          "order": {
+            "extraData": "{\"language\": \"KO\"}",
+            "currencyCode": "KRW",
+            "exchangeRate": null
+          },
+          "claimNo": 123,
+          "requestChannelType": "USER",
+          "channelType": null
+  }
+] 
