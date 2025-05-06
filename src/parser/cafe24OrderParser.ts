@@ -40,7 +40,7 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
 
     const paymentStatus = paid === "T" ? "결제완료" : "미결제";
     const memberStatus = member_id ? "회원" : "비회원";
-    const isFirstOrder = first_order === true ? "예" : "아니오";
+    const isFirstOrder = first_order === "T" ? "예" : "아니오";
 
     const productNames = ordering_product_name.split(",");
     const productCodes = ordering_product_code.split(",");
@@ -95,5 +95,4 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
   }
 }
 
-// 싱글톤 인스턴스 생성 및 내보내기
 export const cafe24OrderParser = new Cafe24OrderParser();
