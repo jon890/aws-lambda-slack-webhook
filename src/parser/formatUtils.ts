@@ -106,3 +106,49 @@ export function formatDateString(isoDateString: string): string {
     return isoDateString;
   }
 }
+
+/**
+ * Cafe24 결제 수단 문자열(쉼표 구분)을 한글로 변환하는 함수
+ * @param paymentMethodString 쉼표로 구분된 결제 수단 문자열 (예: "cash,point,coupon")
+ * @returns 한글로 변환된 결제 수단 설명
+ */
+export function parseCafe24PaymentMethod(paymentMethodString: string): string {
+  if (!paymentMethodString) return "";
+
+  const methods = paymentMethodString.split(",").map((method) => method.trim());
+
+  const translatedMethods = methods.map((method) => {
+    switch (method.toLowerCase()) {
+      case "cash":
+        return "무통장";
+      case "card":
+        return "신용카드";
+      case "cell":
+        return "휴대폰";
+      case "tcash":
+        return "계좌이체";
+      case "prepaid":
+        return "선불금";
+      case "credit":
+        return "예치금";
+      case "point":
+        return "적립금";
+      case "pointfy":
+        return "통합포인트";
+      case "cvs":
+        return "편의점";
+      case "cod":
+        return "후불";
+      case "coupon":
+        return "쿠폰";
+      case "market_discount":
+        return "마켓할인";
+      case "etc":
+        return "기타";
+      default:
+        return method; // 알 수 없는 결제 수단은 원래 값 반환
+    }
+  });
+
+  return translatedMethods.join(", ");
+}

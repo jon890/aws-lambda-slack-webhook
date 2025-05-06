@@ -1,7 +1,11 @@
 import type { Cafe24OrderEventData } from "../types/cafe24";
 import type { EventParser } from "../types/parser";
 import type { SlackMessage } from "../types/slack";
-import { formatDateString, formatPrice } from "./formatUtils";
+import {
+  formatDateString,
+  formatPrice,
+  parseCafe24PaymentMethod,
+} from "./formatUtils";
 
 /**
  * Cafe24 주문 이벤트 데이터를 Slack 메시지로 변환하는 파서
@@ -46,6 +50,8 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
     });
     const productText = productTexts.join("\n");
 
+    const paymentMethodText = parseCafe24PaymentMethod(payment_method);
+
     const orderDate = formatDateString(order_date);
     const paymentDateFormatted = payment_date
       ? formatDateString(payment_date)
@@ -54,7 +60,7 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
     const messageText = `:tada: *[CAFE24] ${buyer_name}님이 구매하셨습니다.* :tada:
 *주문번호:* ${order_id}
 *주문상품:* ${productText}
-*결제수단:* ${payment_method}
+*결제수단:* ${paymentMethodText}
 *실결제금액:* ${formatPrice(actual_payment_amount)} 원
 *이메일:* ${buyer_email}
 *연락처:* ${buyer_cellphone}
