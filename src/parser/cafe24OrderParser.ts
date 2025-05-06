@@ -69,7 +69,6 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
   - 첫주문: ${isFirstOrder}
 
 *추가정보:*
-  - 쇼핑몰: ${mall_id}
   - 주문일시: ${orderDate}
   - 결제일시: ${paymentDateFormatted}
   - 결제상태: ${paymentStatus}
