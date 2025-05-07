@@ -8,7 +8,6 @@ import {
 } from "./utils/envUtils";
 import {
   EVENT_TYPES,
-  EventData,
   getParserForEventType,
   parseEventType,
 } from "./utils/eventTypeParser";
@@ -45,14 +44,9 @@ export const handler = async (
     let success = false;
 
     switch (eventType) {
-      case EVENT_TYPES.CREATE_ORDER: {
-        const parser = getParserForEventType(eventType);
-        const slackMessage = parser.parse(parsedBody);
-        success = await orderCreationService.sendMessage(slackMessage);
-        break;
-      }
-
-      case EVENT_TYPES.CAFE24_ORDER: {
+      case EVENT_TYPES.CREATE_ORDER:
+      case EVENT_TYPES.CAFE24_CREATE_ORDER:
+      case EVENT_TYPES.CAFE24_CANCEL_ORDER: {
         const parser = getParserForEventType(eventType);
         const slackMessage = parser.parse(parsedBody);
         success = await orderCreationService.sendMessage(slackMessage);

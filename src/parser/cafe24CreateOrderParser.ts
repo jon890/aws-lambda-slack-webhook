@@ -1,4 +1,4 @@
-import type { Cafe24OrderEventData } from "../types/cafe24";
+import type { Cafe24CreateOrderData } from "../types/cafe24CreateOrder";
 import type { EventParser } from "../types/parser";
 import type { SlackMessage } from "../types/slack";
 import {
@@ -8,15 +8,17 @@ import {
 } from "./formatUtils";
 
 /**
- * Cafe24 주문 이벤트 데이터를 Slack 메시지로 변환하는 파서
+ * Cafe24 주문 생성 이벤트(event_no: 90023)를 Slack 메시지로 변환하는 파서
  */
-export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
+export class Cafe24CreateOrderParser
+  implements EventParser<Cafe24CreateOrderData>
+{
   /**
-   * Cafe24 주문 이벤트 데이터를 Slack 메시지로 변환
-   * @param data Cafe24 주문 이벤트 데이터
+   * Cafe24 주문 생성 이벤트 데이터를 Slack 메시지로 변환
+   * @param data Cafe24 주문 생성 이벤트 데이터
    * @returns Slack 메시지 형식
    */
-  parse(data: Cafe24OrderEventData): SlackMessage {
+  parse(data: Cafe24CreateOrderData): SlackMessage {
     const { event_no, resource } = data;
     const {
       mall_id,
@@ -94,4 +96,4 @@ export class Cafe24OrderParser implements EventParser<Cafe24OrderEventData> {
   }
 }
 
-export const cafe24OrderParser = new Cafe24OrderParser();
+export const cafe24CreateOrderParser = new Cafe24CreateOrderParser();
