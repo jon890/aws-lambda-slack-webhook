@@ -1,13 +1,13 @@
 import { APIGatewayProxyEvent } from "aws-lambda";
 import { cafe24CancelOrderParser } from "../parser/cafe24CancelOrderParser";
+import { cafe24CreateOrderParser } from "../parser/cafe24CreateOrderParser";
 import { orderEventParser } from "../parser/orderEventParser";
 import { orderStatusChangeParser } from "../parser/orderStatusChangeParser";
-import type { Cafe24OrderEventData } from "../types/cafe24";
 import type { Cafe24CancelOrderData } from "../types/cafe24CancelOrder";
+import type { Cafe24CreateOrderData } from "../types/cafe24CreateOrder";
 import type { OrderEventData } from "../types/order";
 import type { OrderStatusChangeData } from "../types/orderStatus";
 import type { EventParser } from "../types/parser";
-import { cafe24CreateOrderParser } from "../parser/cafe24CreateOrderParser";
 
 /**
  * 이벤트 타입 상수
@@ -25,8 +25,8 @@ export type EventType = (typeof EVENT_TYPES)[keyof typeof EVENT_TYPES];
  * Cafe24 이벤트 번호에 따른 이벤트 타입 매핑
  */
 export const CAFE24_EVENT_NO_MAP: Record<number, EventType> = {
-  90023: EVENT_TYPES.CAFE24_CREATE_ORDER, // 주문 생성 이벤트
-  90026: EVENT_TYPES.CAFE24_CANCEL_ORDER, // 주문 취소 이벤트
+  90023: EVENT_TYPES.CAFE24_CREATE_ORDER,
+  90026: EVENT_TYPES.CAFE24_CANCEL_ORDER,
 };
 
 /**
@@ -35,7 +35,7 @@ export const CAFE24_EVENT_NO_MAP: Record<number, EventType> = {
 export type EventData = {
   [EVENT_TYPES.CREATE_ORDER]: OrderEventData;
   [EVENT_TYPES.ORDER_STATUS_CHANGE]: OrderStatusChangeData[];
-  [EVENT_TYPES.CAFE24_CREATE_ORDER]: Cafe24OrderEventData;
+  [EVENT_TYPES.CAFE24_CREATE_ORDER]: Cafe24CreateOrderData;
   [EVENT_TYPES.CAFE24_CANCEL_ORDER]: Cafe24CancelOrderData;
 };
 
@@ -47,7 +47,7 @@ type EventParsersMap = {
       data: OrderStatusChangeData[]
     ): ReturnType<typeof orderStatusChangeParser.parse>;
   };
-  [EVENT_TYPES.CAFE24_CREATE_ORDER]: EventParser<Cafe24OrderEventData>;
+  [EVENT_TYPES.CAFE24_CREATE_ORDER]: EventParser<Cafe24CreateOrderData>;
   [EVENT_TYPES.CAFE24_CANCEL_ORDER]: EventParser<Cafe24CancelOrderData>;
 };
 
